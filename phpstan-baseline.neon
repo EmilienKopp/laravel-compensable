@@ -1,0 +1,13 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Trait Splitstack\\Compensable\\Concerns\\IsSteppable is used zero times and is not analysed\.$#'
+			identifier: trait.unused
+			count: 1
+			path: src/Concerns/IsSteppable.php
+
+		-
+			message: '#^Trait Splitstack\\Compensable\\Domain\\Concerns\\Eventable is used zero times and is not analysed\.$#'
+			identifier: trait.unused
+			count: 1
+			path: src/Domain/Concerns/Eventable.php
