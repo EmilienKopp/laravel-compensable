@@ -21,7 +21,7 @@ WorkflowPipeline  →  sequences UseCases/Actions via Steps. Owns the error boun
 Step          →  thin adapter around any existing class. Declares compensation for code that can't.
 ```
 
-**DB rollback is owned by the transaction. `undo()` is for everything else** (API calls, S3, webhooks). An Action whose only mutations are DB writes declares an empty `undo()` — that is the explicit answer to the compensation question.
+**DB rollback is owned by the transaction. `undo()` is for everything else** (API calls, S3, webhooks). An Action whose only mutations are DB writes declares an empty `undo()` which is the explicit answer to the compensation question.
 
 ---
 
@@ -67,7 +67,7 @@ class CreateOrder extends Action
 
 ## UseCases
 
-A UseCase is a `CompensableScope` over its Actions and is itself `Compensable` — so a parent pipeline can undo it, cascading compensation down to every Action it ran.
+A UseCase is a `CompensableScope` over its Actions and is itself `Compensable` so a parent pipeline can undo it, cascading compensation down to every Action it ran.
 
 ```php
 class PlaceOrder extends UseCase
@@ -97,7 +97,7 @@ class PlaceOrder extends UseCase
 ```
 
 - `step()` executes an Action and registers it for potential compensation.
-- Domain events recorded inside `executeWithEvents()` are dispatched only after the outermost transaction commits — never on failure.
+- Domain events recorded inside `executeWithEvents()` are dispatched only after the outermost transaction commits but never on failure.
 - `undo()` is inherited: it replays all registered Action undos in reverse.
 
 ---
@@ -121,7 +121,7 @@ class CheckoutPayload extends WorkflowPayload
 
 ## Steps
 
-A Step adapts any existing class — including code that is closed for modification — into the pipeline. It extracts what the callee needs from the payload, calls it, and **declares compensation as its own behavior**.
+A Step adapts any existing class, including code that is closed for modification, into the pipeline. It extracts what the callee needs from the payload, calls it, and **declares compensation as its own behavior**.
 
 ```php
 class PlaceOrderStep implements Steppable, Undoable
@@ -202,7 +202,7 @@ final class CheckoutWorkflow extends WorkflowPipeline
 
 On failure at any step:
 
-1. **DB**: the outer transaction rolls back — all writes from all steps, including released savepoints.
+1. **DB**: the outer transaction rolls back all writes from all steps, including released savepoints.
 2. **External state**: `undo()` cascades in reverse through every completed step.
 
 ---
@@ -242,7 +242,7 @@ Default behavior when no hook is set: `Log::error`.
 
 ## Per-step retry
 
-Actions and UseCases opt into retry by overriding `getRetryConfig()`. `isUnrecoverableError()` must then be implemented — it is the explicit declaration that some failures should not be retried.
+Actions and UseCases opt into retry by overriding `getRetryConfig()`. `isUnrecoverableError()` must then be implemented: it is the explicit declaration that some failures should not be retried.
 
 ```php
 class SyncExternalListing extends Action
@@ -282,7 +282,7 @@ $scope->onStepFailed(function (FailedStep $f): void {
 |---|---|
 | Action inside a UseCase | savepoint (released on UseCase "commit") |
 | UseCase inside a WorkflowPipeline | savepoint (rolled back if pipeline rolls back) |
-| UseCase called standalone | outermost transaction — commits immediately |
+| UseCase called standalone | outermost transaction, commits immediately |
 
 `DB::afterCommit` defers to the outermost transaction in all cases. Events recorded inside a UseCase nested in a pipeline fire only when the pipeline itself commits.
 
@@ -290,6 +290,6 @@ $scope->onStepFailed(function (FailedStep $f): void {
 
 ## Scope of this package
 
-This package provides **best-effort, in-process compensation with explicit contracts**. It is not durable execution — if the process crashes between an external mutation and its `undo()`, no compensation runs. For guaranteed compensation across process restarts, consider Temporal.io or a durable workflow engine.
+This package provides **best-effort, in-process compensation with explicit contracts**. It is not durable execution, if the process crashes between an external mutation and its `undo()`, no compensation runs. For guaranteed compensation across process restarts, consider Temporal.io or a durable workflow engine.
 
-The `onStepFailed` / `onCompensationFailed` hooks are the extension points for plugging in queue-backed retry — durability stays the consumer's choice.
+The `onStepFailed` / `onCompensationFailed` hooks are the extension points for plugging in queue-backed retry.
