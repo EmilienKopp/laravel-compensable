@@ -1,17 +1,17 @@
 <?php
 
-namespace Splitstack\Compensable\Tests;
+namespace Splitstack\Conveyor\Tests;
 
-use Splitstack\Compensable\CompensableScope;
-use Splitstack\Compensable\FailedCompensation;
-use Splitstack\Compensable\Infrastructure\Transaction\Transactioner;
-use Splitstack\Compensable\Tests\Fixtures\Actions\SpyAction;
+use Splitstack\Conveyor\TransactionalBoundary;
+use Splitstack\Conveyor\FailedCompensation;
+use Splitstack\Conveyor\Infrastructure\Transaction\Transactioner;
+use Splitstack\Conveyor\Tests\Fixtures\Actions\SpyAction;
 
-class CompensableScopeTest extends TestCase
+class TransactionalBoundaryTest extends TestCase
 {
-    private function scope(): CompensableScope
+    private function scope(): TransactionalBoundary
     {
-        return new CompensableScope(new Transactioner);
+        return new TransactionalBoundary(new Transactioner);
     }
 
     public function test_successful_execution_returns_the_callback_result(): void
@@ -19,7 +19,7 @@ class CompensableScopeTest extends TestCase
         $log = new \ArrayObject;
         $scope = $this->scope();
 
-        $result = $scope->execute(function (CompensableScope $s) use ($log) {
+        $result = $scope->execute(function (TransactionalBoundary $s) use ($log) {
             $s->step(new SpyAction('a', $log));
 
             return $s->step(new SpyAction('b', $log));
@@ -35,7 +35,7 @@ class CompensableScopeTest extends TestCase
         $scope = $this->scope();
 
         try {
-            $scope->execute(function (CompensableScope $s) use ($log) {
+            $scope->execute(function (TransactionalBoundary $s) use ($log) {
                 $s->step(new SpyAction('a', $log));
                 $s->step(new SpyAction('b', $log));
                 $s->step(new SpyAction('boom', $log, failOnHandle: true));
@@ -60,7 +60,7 @@ class CompensableScopeTest extends TestCase
         );
 
         try {
-            $scope->execute(function (CompensableScope $s) use ($log) {
+            $scope->execute(function (TransactionalBoundary $s) use ($log) {
                 $s->step(new SpyAction('a', $log));
                 $s->step(new SpyAction('bad-undo', $log, failOnUndo: true));
                 $s->step(new SpyAction('boom', $log, failOnHandle: true));

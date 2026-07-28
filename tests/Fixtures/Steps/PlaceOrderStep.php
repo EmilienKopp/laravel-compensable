@@ -1,12 +1,12 @@
 <?php
 
-namespace Splitstack\Compensable\Tests\Fixtures\Steps;
+namespace Splitstack\Conveyor\Tests\Fixtures\Steps;
 
-use Splitstack\Compensable\Concerns\IsSteppable;
-use Splitstack\Compensable\Contracts\Steppable;
-use Splitstack\Compensable\Contracts\Undoable;
-use Splitstack\Compensable\Tests\Fixtures\Payloads\CheckoutPayload;
-use Splitstack\Compensable\Tests\Fixtures\UseCases\PlaceOrder;
+use Splitstack\Conveyor\Concerns\IsSteppable;
+use Splitstack\Conveyor\Contracts\Steppable;
+use Splitstack\Conveyor\Contracts\Undoable;
+use Splitstack\Conveyor\Tests\Fixtures\Payloads\CheckoutPayload;
+use Splitstack\Conveyor\Tests\Fixtures\UseCases\PlaceOrder;
 
 /**
  * Thin adapter: extracts from the payload, calls the UseCase that

@@ -1,8 +1,8 @@
 <?php
 
-namespace Splitstack\Compensable;
+namespace Splitstack\Conveyor;
 
-use Splitstack\Compensable\Contracts\Compensable;
+use Splitstack\Conveyor\Contracts\TransactionalUnit;
 
 /**
  * Context handed to the per-step onHandleFailed hook when all retries
@@ -18,7 +18,7 @@ final class FailedStep
     public readonly \DateTimeImmutable $failedAt;
 
     public function __construct(
-        public readonly Compensable $action,
+        public readonly TransactionalUnit $action,
         public readonly \Throwable $exception,
         public readonly int $attempts,
         public readonly ?RetryConfig $retryConfig,

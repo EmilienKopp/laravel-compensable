@@ -1,8 +1,8 @@
 <?php
 
-namespace Splitstack\Compensable\Tests\Fixtures\Domain;
+namespace Splitstack\Conveyor\Tests\Fixtures\Domain;
 
-use Splitstack\Compensable\Domain\Contracts\IsDomainEvent;
+use Splitstack\Conveyor\Domain\Contracts\IsDomainEvent;
 
 final class GenericDomainEvent implements IsDomainEvent
 {

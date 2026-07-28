@@ -1,12 +1,12 @@
 <?php
 
-namespace Splitstack\Compensable\Tests\Fixtures\Workflows;
+namespace Splitstack\Conveyor\Tests\Fixtures\Workflows;
 
-use Splitstack\Compensable\Infrastructure\Transaction\Transactioner;
-use Splitstack\Compensable\Tests\Fixtures\Payloads\CheckoutPayload;
-use Splitstack\Compensable\Tests\Fixtures\Steps\BookShipmentStep;
-use Splitstack\Compensable\Tests\Fixtures\Steps\PlaceOrderStep;
-use Splitstack\Compensable\WorkflowPipeline;
+use Splitstack\Conveyor\Infrastructure\Transaction\Transactioner;
+use Splitstack\Conveyor\Tests\Fixtures\Payloads\CheckoutPayload;
+use Splitstack\Conveyor\Tests\Fixtures\Steps\BookShipmentStep;
+use Splitstack\Conveyor\Tests\Fixtures\Steps\PlaceOrderStep;
+use Splitstack\Conveyor\WorkflowPipeline;
 
 /**
  * The target consuming syntax: a named workflow IS a WorkflowPipeline,

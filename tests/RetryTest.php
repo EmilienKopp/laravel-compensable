@@ -1,18 +1,18 @@
 <?php
 
-namespace Splitstack\Compensable\Tests;
+namespace Splitstack\Conveyor\Tests;
 
-use Splitstack\Compensable\CompensableScope;
-use Splitstack\Compensable\FailedStep;
-use Splitstack\Compensable\Infrastructure\Transaction\Transactioner;
-use Splitstack\Compensable\Tests\Fixtures\Actions\FlakeyAction;
-use Splitstack\Compensable\Tests\Fixtures\Actions\SpyAction;
+use Splitstack\Conveyor\TransactionalBoundary;
+use Splitstack\Conveyor\FailedStep;
+use Splitstack\Conveyor\Infrastructure\Transaction\Transactioner;
+use Splitstack\Conveyor\Tests\Fixtures\Actions\FlakeyAction;
+use Splitstack\Conveyor\Tests\Fixtures\Actions\SpyAction;
 
 class RetryTest extends TestCase
 {
-    private function scope(): CompensableScope
+    private function scope(): TransactionalBoundary
     {
-        return new CompensableScope(new Transactioner());
+        return new TransactionalBoundary(new Transactioner());
     }
 
     public function test_action_succeeds_after_transient_failure(): void
@@ -20,7 +20,7 @@ class RetryTest extends TestCase
         $scope = $this->scope();
 
         $result = $scope->execute(
-            fn(CompensableScope $s) => $s->step(new FlakeyAction(succeedOnAttempt: 2))
+            fn(TransactionalBoundary $s) => $s->step(new FlakeyAction(succeedOnAttempt: 2))
         );
 
         $this->assertSame('ok:2', $result);
@@ -35,7 +35,7 @@ class RetryTest extends TestCase
 
         try {
             $scope->execute(
-                fn(CompensableScope $s) => $s->step(new FlakeyAction(succeedOnAttempt: 99))
+                fn(TransactionalBoundary $s) => $s->step(new FlakeyAction(succeedOnAttempt: 99))
             );
             $this->fail('expected exception');
         } catch (\RuntimeException) {
@@ -53,7 +53,7 @@ class RetryTest extends TestCase
         $scope = $this->scope()->onStepFailed(fn() => null);
 
         try {
-            $scope->execute(function (CompensableScope $s) use ($log) {
+            $scope->execute(function (TransactionalBoundary $s) use ($log) {
                 $s->step(new SpyAction('a', $log));
                 $s->step(new FlakeyAction(succeedOnAttempt: 99));
             });
@@ -73,7 +73,7 @@ class RetryTest extends TestCase
 
         try {
             $scope->execute(
-                fn(CompensableScope $s) => $s->step(
+                fn(TransactionalBoundary $s) => $s->step(
                     new FlakeyAction(succeedOnAttempt: 99, unrecoverableOnSecondFailure: true)
                 )
             );
@@ -99,7 +99,7 @@ class RetryTest extends TestCase
         });
 
         try {
-            $scope->execute(fn(CompensableScope $s) => $s->step(new FlakeyAction(succeedOnAttempt: 99)));
+            $scope->execute(fn(TransactionalBoundary $s) => $s->step(new FlakeyAction(succeedOnAttempt: 99)));
             $this->fail('expected exception');
         } catch (\RuntimeException) {
         }
@@ -116,7 +116,7 @@ class RetryTest extends TestCase
         $scope = $this->scope();
 
         try {
-            $scope->execute(function (CompensableScope $s) use ($log) {
+            $scope->execute(function (TransactionalBoundary $s) use ($log) {
                 $s->step(new SpyAction('a', $log));
                 $s->step(new SpyAction('boom', $log, failOnHandle: true));
             });

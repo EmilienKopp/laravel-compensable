@@ -1,6 +1,6 @@
 <?php
 
-namespace Splitstack\Compensable\Tests\Fixtures\External;
+namespace Splitstack\Conveyor\Tests\Fixtures\External;
 
 /**
  * Stands in for pre-existing application code: uses the execute()

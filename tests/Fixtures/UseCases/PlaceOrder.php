@@ -1,12 +1,12 @@
 <?php
 
-namespace Splitstack\Compensable\Tests\Fixtures\UseCases;
+namespace Splitstack\Conveyor\Tests\Fixtures\UseCases;
 
-use Splitstack\Compensable\Contracts\UseCase;
-use Splitstack\Compensable\Infrastructure\Transaction\Transactioner;
-use Splitstack\Compensable\Tests\Fixtures\Actions\ChargePayment;
-use Splitstack\Compensable\Tests\Fixtures\Actions\CreateOrder;
-use Splitstack\Compensable\Tests\Fixtures\Domain\Order;
+use Splitstack\Conveyor\Contracts\UseCase;
+use Splitstack\Conveyor\Infrastructure\Transaction\Transactioner;
+use Splitstack\Conveyor\Tests\Fixtures\Actions\ChargePayment;
+use Splitstack\Conveyor\Tests\Fixtures\Actions\CreateOrder;
+use Splitstack\Conveyor\Tests\Fixtures\Domain\Order;
 
 /**
  * One business operation, one (save-pointed) transaction, two Actions.

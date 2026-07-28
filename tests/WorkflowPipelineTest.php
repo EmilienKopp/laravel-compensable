@@ -1,26 +1,26 @@
 <?php
 
-namespace Splitstack\Compensable\Tests;
+namespace Splitstack\Conveyor\Tests;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
-use Splitstack\Compensable\FailedCompensation;
-use Splitstack\Compensable\Infrastructure\Transaction\Transactioner;
-use Splitstack\Compensable\Tests\Fixtures\Actions\AbortUnlessShippable;
-use Splitstack\Compensable\Tests\Fixtures\Actions\BookShipment;
-use Splitstack\Compensable\Tests\Fixtures\Actions\ChargePayment;
-use Splitstack\Compensable\Tests\Fixtures\Actions\CreateOrder;
-use Splitstack\Compensable\Tests\Fixtures\Domain\GenericDomainEvent;
-use Splitstack\Compensable\Tests\Fixtures\External\FakePaymentGateway;
-use Splitstack\Compensable\Tests\Fixtures\External\FakeShippingService;
-use Splitstack\Compensable\Tests\Fixtures\External\LegacyLoyaltyService;
-use Splitstack\Compensable\Tests\Fixtures\Payloads\CheckoutPayload;
-use Splitstack\Compensable\Tests\Fixtures\Steps\AwardLoyaltyPointsStep;
-use Splitstack\Compensable\Tests\Fixtures\Steps\BookShipmentStep;
-use Splitstack\Compensable\Tests\Fixtures\Steps\PlaceOrderStep;
-use Splitstack\Compensable\Tests\Fixtures\UseCases\PlaceOrder;
-use Splitstack\Compensable\Tests\Fixtures\Workflows\CheckoutWorkflow;
-use Splitstack\Compensable\WorkflowPipeline;
+use Splitstack\Conveyor\FailedCompensation;
+use Splitstack\Conveyor\Infrastructure\Transaction\Transactioner;
+use Splitstack\Conveyor\Tests\Fixtures\Actions\AbortUnlessShippable;
+use Splitstack\Conveyor\Tests\Fixtures\Actions\BookShipment;
+use Splitstack\Conveyor\Tests\Fixtures\Actions\ChargePayment;
+use Splitstack\Conveyor\Tests\Fixtures\Actions\CreateOrder;
+use Splitstack\Conveyor\Tests\Fixtures\Domain\GenericDomainEvent;
+use Splitstack\Conveyor\Tests\Fixtures\External\FakePaymentGateway;
+use Splitstack\Conveyor\Tests\Fixtures\External\FakeShippingService;
+use Splitstack\Conveyor\Tests\Fixtures\External\LegacyLoyaltyService;
+use Splitstack\Conveyor\Tests\Fixtures\Payloads\CheckoutPayload;
+use Splitstack\Conveyor\Tests\Fixtures\Steps\AwardLoyaltyPointsStep;
+use Splitstack\Conveyor\Tests\Fixtures\Steps\BookShipmentStep;
+use Splitstack\Conveyor\Tests\Fixtures\Steps\PlaceOrderStep;
+use Splitstack\Conveyor\Tests\Fixtures\UseCases\PlaceOrder;
+use Splitstack\Conveyor\Tests\Fixtures\Workflows\CheckoutWorkflow;
+use Splitstack\Conveyor\WorkflowPipeline;
 
 class WorkflowPipelineTest extends TestCase
 {

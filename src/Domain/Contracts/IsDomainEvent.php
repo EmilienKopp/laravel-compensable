@@ -1,6 +1,6 @@
 <?php
 
-namespace Splitstack\Compensable\Domain\Contracts;
+namespace Splitstack\Conveyor\Domain\Contracts;
 
 interface IsDomainEvent
 {

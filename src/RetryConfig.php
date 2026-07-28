@@ -1,6 +1,6 @@
 <?php
 
-namespace Splitstack\Compensable;
+namespace Splitstack\Conveyor;
 
 /**
  * Retry policy for a Compensable. Returned by getRetryConfig() — null

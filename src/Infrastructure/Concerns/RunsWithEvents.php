@@ -1,11 +1,11 @@
 <?php
 
-namespace Splitstack\Compensable\Infrastructure\Concerns;
+namespace Splitstack\Conveyor\Infrastructure\Concerns;
 
 use Closure;
 use Illuminate\Support\Facades\Event;
-use Splitstack\Compensable\Domain\Contracts\HasDomainEvents;
-use Splitstack\Compensable\Domain\Contracts\IsDomainEvent;
+use Splitstack\Conveyor\Domain\Contracts\HasDomainEvents;
+use Splitstack\Conveyor\Domain\Contracts\IsDomainEvent;
 
 trait RunsWithEvents
 {

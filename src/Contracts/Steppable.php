@@ -1,6 +1,6 @@
 <?php
 
-namespace Splitstack\Compensable\Contracts;
+namespace Splitstack\Conveyor\Contracts;
 
 /**
  * Marker interface for pipeline-aware steps. Implementing classes define

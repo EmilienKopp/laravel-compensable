@@ -1,6 +1,6 @@
 <?php
 
-namespace Splitstack\Compensable;
+namespace Splitstack\Conveyor;
 
 /**
  * Graceful early exit from a workflow: work completed so far is kept

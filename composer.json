@@ -1,16 +1,16 @@
 {
-  "name": "splitstack/laravel-compensable",
+  "name": "splitstack/laravel-conveyor",
   "type": "library",
   "license": "MIT",
   "autoload": {
     "psr-4": {
-      "Splitstack\\Compensable\\": "src/"
+      "Splitstack\\Conveyor\\": "src/"
     }
   },
   "extra": {
     "laravel": {
       "providers": [
-        "Splitstack\\Compensable\\CompensableServiceProvider"
+        "Splitstack\\Conveyor\\ConveyorServiceProvider"
       ]
     }
   },
@@ -21,7 +21,7 @@
   },
   "autoload-dev": {
     "psr-4": {
-      "Splitstack\\Compensable\\Tests\\": "tests/"
+      "Splitstack\\Conveyor\\Tests\\": "tests/"
     }
   },
   "authors": [

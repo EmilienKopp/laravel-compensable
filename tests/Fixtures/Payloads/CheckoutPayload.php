@@ -1,8 +1,8 @@
 <?php
 
-namespace Splitstack\Compensable\Tests\Fixtures\Payloads;
+namespace Splitstack\Conveyor\Tests\Fixtures\Payloads;
 
-use Splitstack\Compensable\Contracts\WorkflowPayload;
+use Splitstack\Conveyor\Contracts\WorkflowPayload;
 
 /**
  * Known-at-entry properties are readonly constructor promoted;

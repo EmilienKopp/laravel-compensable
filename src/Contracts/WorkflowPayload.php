@@ -1,6 +1,6 @@
 <?php
 
-namespace Splitstack\Compensable\Contracts;
+namespace Splitstack\Conveyor\Contracts;
 
 abstract class WorkflowPayload
 {
@@ -13,11 +13,16 @@ abstract class WorkflowPayload
 
     public function get(string $key, mixed $default = null): mixed
     {
-        return $this->bag[$key] ?? $default;
+        if (\array_key_exists($key, $this->bag)) {
+            return $this->bag[$key];
+        }
+
+        return property_exists($this, $key) ? $this->$key : $default;
     }
 
     public function has(string $key): bool
     {
-        return \array_key_exists($key, $this->bag);
+        return \array_key_exists($key, $this->bag)
+            || property_exists($this, $key) && isset($this->$key);
     }
 }

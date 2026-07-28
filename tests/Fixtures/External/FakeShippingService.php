@@ -1,6 +1,6 @@
 <?php
 
-namespace Splitstack\Compensable\Tests\Fixtures\External;
+namespace Splitstack\Conveyor\Tests\Fixtures\External;
 
 class FakeShippingService
 {

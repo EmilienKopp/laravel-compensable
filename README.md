@@ -278,11 +278,11 @@ $scope->onStepFailed(function (FailedStep $f): void {
 
 ## Nested transaction behavior
 
-| Context | DB::transaction() behavior |
-|---|---|
-| Action inside a UseCase | savepoint (released on UseCase "commit") |
+| Context                           | DB::transaction() behavior                     |
+| --------------------------------- | ---------------------------------------------- |
+| Action inside a UseCase           | savepoint (released on UseCase "commit")       |
 | UseCase inside a WorkflowPipeline | savepoint (rolled back if pipeline rolls back) |
-| UseCase called standalone | outermost transaction, commits immediately |
+| UseCase called standalone         | outermost transaction, commits immediately     |
 
 `DB::afterCommit` defers to the outermost transaction in all cases. Events recorded inside a UseCase nested in a pipeline fire only when the pipeline itself commits.
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace Splitstack\Compensable\Tests\Fixtures\External;
+namespace Splitstack\Conveyor\Tests\Fixtures\External;
 
 /**
  * Stands in for a remote payment API — the kind of external state a DB

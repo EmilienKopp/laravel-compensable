@@ -1,8 +1,8 @@
 <?php
 
-namespace Splitstack\Compensable\Tests\Fixtures\Actions;
+namespace Splitstack\Conveyor\Tests\Fixtures\Actions;
 
-use Splitstack\Compensable\Contracts\Action;
+use Splitstack\Conveyor\Contracts\Action;
 
 /**
  * Records handle/undo calls into a shared log so tests can assert

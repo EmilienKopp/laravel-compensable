@@ -1,11 +1,11 @@
 <?php
 
-namespace Splitstack\Compensable;
+namespace Splitstack\Conveyor;
 
 use Illuminate\Support\ServiceProvider;
-use Splitstack\Compensable\Infrastructure\Transaction\Transactioner;
+use Splitstack\Conveyor\Infrastructure\Transaction\Transactioner;
 
-class CompensableServiceProvider extends ServiceProvider
+class ConveyorServiceProvider extends ServiceProvider
 {
     public function register(): void
     {

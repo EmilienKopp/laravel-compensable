@@ -1,6 +1,6 @@
 <?php
 
-namespace Splitstack\Compensable\Tests;
+namespace Splitstack\Conveyor\Tests;
 
 use Illuminate\Support\Facades\Schema;
 use Orchestra\Testbench\TestCase as Orchestra;

@@ -1,10 +1,10 @@
 <?php
 
-namespace Splitstack\Compensable\Infrastructure\Transaction;
+namespace Splitstack\Conveyor\Infrastructure\Transaction;
 
 use Closure;
 use Illuminate\Support\Facades\DB;
-use Splitstack\Compensable\Infrastructure\Concerns\RunsWithEvents;
+use Splitstack\Conveyor\Infrastructure\Concerns\RunsWithEvents;
 
 class Transactioner
 {

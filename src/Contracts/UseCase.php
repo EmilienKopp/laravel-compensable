@@ -1,16 +1,16 @@
 <?php
 
-namespace Splitstack\Compensable\Contracts;
+namespace Splitstack\Conveyor\Contracts;
 
-use Splitstack\Compensable\CompensableScope;
-use Splitstack\Compensable\RetryConfig;
+use Splitstack\Conveyor\TransactionalBoundary;
+use Splitstack\Conveyor\RetryConfig;
 
 /**
- * A UseCase is a CompensableScope over its Actions, and is itself
+ * A UseCase is a TransactionalBoundary over its Actions, and is itself
  * Compensable so a parent scope (e.g. a WorkflowPipeline) can undo it —
  * cascading compensation down to every Action it ran.
  */
-abstract class UseCase extends CompensableScope implements Compensable, TransactsWithEvents
+abstract class UseCase extends TransactionalBoundary implements TransactionalUnit, TransactsWithEvents
 {
     abstract public function handle(...$args): mixed;
 

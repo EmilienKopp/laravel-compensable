@@ -1,9 +1,9 @@
 <?php
 
-namespace Splitstack\Compensable\Concerns;
+namespace Splitstack\Conveyor\Concerns;
 
 use Closure;
-use Splitstack\Compensable\Contracts\WorkflowPayload;
+use Splitstack\Conveyor\Contracts\WorkflowPayload;
 
 /**
  * Wires __invoke() to handle() or execute() so any class can be used as

@@ -1,12 +1,12 @@
 <?php
 
-namespace Splitstack\Compensable\Tests;
+namespace Splitstack\Conveyor\Tests;
 
 use Illuminate\Support\Facades\DB;
-use Splitstack\Compensable\Infrastructure\Transaction\Transactioner;
-use Splitstack\Compensable\Tests\Fixtures\Domain\GenericDomainEvent;
-use Splitstack\Compensable\Tests\Fixtures\Domain\Order;
-use Splitstack\Compensable\Tests\Fixtures\Domain\RecordsEvents;
+use Splitstack\Conveyor\Infrastructure\Transaction\Transactioner;
+use Splitstack\Conveyor\Tests\Fixtures\Domain\GenericDomainEvent;
+use Splitstack\Conveyor\Tests\Fixtures\Domain\Order;
+use Splitstack\Conveyor\Tests\Fixtures\Domain\RecordsEvents;
 
 class TransactionerTest extends TestCase
 {

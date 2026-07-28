@@ -1,16 +1,16 @@
 <?php
 
-namespace Splitstack\Compensable\Tests;
+namespace Splitstack\Conveyor\Tests;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
-use Splitstack\Compensable\Infrastructure\Transaction\Transactioner;
-use Splitstack\Compensable\Tests\Fixtures\Actions\ChargePayment;
-use Splitstack\Compensable\Tests\Fixtures\Actions\CreateOrder;
-use Splitstack\Compensable\Tests\Fixtures\Domain\GenericDomainEvent;
-use Splitstack\Compensable\Tests\Fixtures\Domain\Order;
-use Splitstack\Compensable\Tests\Fixtures\External\FakePaymentGateway;
-use Splitstack\Compensable\Tests\Fixtures\UseCases\PlaceOrder;
+use Splitstack\Conveyor\Infrastructure\Transaction\Transactioner;
+use Splitstack\Conveyor\Tests\Fixtures\Actions\ChargePayment;
+use Splitstack\Conveyor\Tests\Fixtures\Actions\CreateOrder;
+use Splitstack\Conveyor\Tests\Fixtures\Domain\GenericDomainEvent;
+use Splitstack\Conveyor\Tests\Fixtures\Domain\Order;
+use Splitstack\Conveyor\Tests\Fixtures\External\FakePaymentGateway;
+use Splitstack\Conveyor\Tests\Fixtures\UseCases\PlaceOrder;
 
 class UseCaseTest extends TestCase
 {

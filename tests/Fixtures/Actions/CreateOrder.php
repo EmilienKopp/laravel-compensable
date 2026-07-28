@@ -1,10 +1,10 @@
 <?php
 
-namespace Splitstack\Compensable\Tests\Fixtures\Actions;
+namespace Splitstack\Conveyor\Tests\Fixtures\Actions;
 
 use Illuminate\Support\Facades\DB;
-use Splitstack\Compensable\Contracts\Action;
-use Splitstack\Compensable\Tests\Fixtures\Domain\Order;
+use Splitstack\Conveyor\Contracts\Action;
+use Splitstack\Conveyor\Tests\Fixtures\Domain\Order;
 
 /**
  * Pure-DB action: the owning scope's transaction reverts the insert,

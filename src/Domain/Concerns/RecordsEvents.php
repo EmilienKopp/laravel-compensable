@@ -1,15 +1,15 @@
 <?php
 
-namespace Splitstack\Conveyor\Tests\Fixtures\Domain;
+namespace Splitstack\Conveyor\Domain\Concerns;
 
-trait RecordsEvents
+
+class RecordsEvents
 {
-    /** @var GenericDomainEvent[] */
     private array $recordedEvents = [];
 
     public function recordEvent(string $event, mixed $payload): void
     {
-        $this->recordedEvents[] = new GenericDomainEvent($event, $payload);
+        $this->recordedEvents[$event] = $payload;
     }
 
     public function getRecordedEvents(): array

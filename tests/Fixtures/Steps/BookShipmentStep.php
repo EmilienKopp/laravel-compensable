@@ -1,12 +1,12 @@
 <?php
 
-namespace Splitstack\Compensable\Tests\Fixtures\Steps;
+namespace Splitstack\Conveyor\Tests\Fixtures\Steps;
 
-use Splitstack\Compensable\Concerns\IsSteppable;
-use Splitstack\Compensable\Contracts\Steppable;
-use Splitstack\Compensable\Contracts\Undoable;
-use Splitstack\Compensable\Tests\Fixtures\Actions\BookShipment;
-use Splitstack\Compensable\Tests\Fixtures\Payloads\CheckoutPayload;
+use Splitstack\Conveyor\Concerns\IsSteppable;
+use Splitstack\Conveyor\Contracts\Steppable;
+use Splitstack\Conveyor\Contracts\Undoable;
+use Splitstack\Conveyor\Tests\Fixtures\Actions\BookShipment;
+use Splitstack\Conveyor\Tests\Fixtures\Payloads\CheckoutPayload;
 
 /**
  * Declares its dependency on a mid-pipeline value: without an 'order'

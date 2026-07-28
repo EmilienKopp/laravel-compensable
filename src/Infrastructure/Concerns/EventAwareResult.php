@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Splitstack\Compensable\Infrastructure\Concerns;
+namespace Splitstack\Conveyor\Infrastructure\Concerns;
 
 use Closure;
 

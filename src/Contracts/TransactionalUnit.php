@@ -1,13 +1,13 @@
 <?php
 
-namespace Splitstack\Compensable\Contracts;
+namespace Splitstack\Conveyor\Contracts;
 
-use Splitstack\Compensable\RetryConfig;
+use Splitstack\Conveyor\RetryConfig;
 
 /**
  * @template T
  */
-interface Compensable extends Undoable
+interface TransactionalUnit extends Undoable
 {
     /**
      * Perform a process

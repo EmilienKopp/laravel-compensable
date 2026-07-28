@@ -1,9 +1,9 @@
 <?php
 
-namespace Splitstack\Compensable\Tests\Fixtures\Actions;
+namespace Splitstack\Conveyor\Tests\Fixtures\Actions;
 
-use Splitstack\Compensable\Contracts\Action;
-use Splitstack\Compensable\RetryConfig;
+use Splitstack\Conveyor\Contracts\Action;
+use Splitstack\Conveyor\RetryConfig;
 
 /**
  * Succeeds on the Nth attempt — simulates a transient external failure.

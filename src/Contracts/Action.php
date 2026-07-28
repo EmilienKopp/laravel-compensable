@@ -1,8 +1,8 @@
 <?php
 
-namespace Splitstack\Compensable\Contracts;
+namespace Splitstack\Conveyor\Contracts;
 
-use Splitstack\Compensable\RetryConfig;
+use Splitstack\Conveyor\RetryConfig;
 
 /**
  * Atomic unit of application work. One thing, no transaction of its own,
@@ -16,9 +16,9 @@ use Splitstack\Compensable\RetryConfig;
  *
  * @template T
  *
- * @implements Compensable<T>
+ * @implements TransactionalUnit<T>
  */
-abstract class Action implements Compensable
+abstract class Action implements TransactionalUnit
 {
     /**
      * @return T

@@ -1,8 +1,8 @@
 <?php
 
-namespace Splitstack\Compensable\Tests\Fixtures\Domain;
+namespace Splitstack\Conveyor\Tests\Fixtures\Domain;
 
-use Splitstack\Compensable\Domain\Contracts\HasDomainEvents;
+use Splitstack\Conveyor\Domain\Contracts\HasDomainEvents;
 
 class Order implements HasDomainEvents
 {

@@ -1,8 +1,8 @@
 <?php
 
-namespace Splitstack\Compensable;
+namespace Splitstack\Conveyor;
 
-use Splitstack\Compensable\Contracts\Undoable;
+use Splitstack\Conveyor\Contracts\Undoable;
 
 /**
  * Full context of a failed undo(), handed to the onCompensationFailed hook.

@@ -1,11 +1,11 @@
 <?php
 
-namespace Splitstack\Compensable\Tests\Fixtures\Actions;
+namespace Splitstack\Conveyor\Tests\Fixtures\Actions;
 
 use Illuminate\Support\Facades\DB;
-use Splitstack\Compensable\Contracts\Action;
-use Splitstack\Compensable\Tests\Fixtures\Domain\Order;
-use Splitstack\Compensable\Tests\Fixtures\External\FakePaymentGateway;
+use Splitstack\Conveyor\Contracts\Action;
+use Splitstack\Conveyor\Tests\Fixtures\Domain\Order;
+use Splitstack\Conveyor\Tests\Fixtures\External\FakePaymentGateway;
 
 /**
  * Mixed action: the DB update rolls back with the transaction; the remote
