@@ -1,126 +1,116 @@
 <?php
 
-namespace Splitstack\Conveyor\Tests;
-
 use Illuminate\Support\Facades\DB;
 use Splitstack\Conveyor\Infrastructure\Transaction\Transactioner;
 use Splitstack\Conveyor\Tests\Fixtures\Domain\GenericDomainEvent;
 use Splitstack\Conveyor\Tests\Fixtures\Domain\Order;
 use Splitstack\Conveyor\Tests\Fixtures\Domain\RecordsEvents;
 
-class TransactionerTest extends TestCase
+
+function transactioner(): Transactioner
 {
-    private function transactioner(): Transactioner
-    {
-        return new Transactioner();
-    }
+    return new Transactioner();
+}
 
-    public function test_execute_commits_and_returns_result(): void
-    {
-        $result = $this->transactioner()->execute(function () {
+test('execute commits and returns result', function () {
+    $result = transactioner()->execute(function () {
+        DB::table('orders')->insert(['customer' => 'alice', 'amount' => 100, 'status' => 'pending']);
+
+        return 'done';
+    });
+
+    expect($result)->toBe('done');
+    expect(DB::table('orders')->count())->toBe(1);
+});
+
+test('execute rolls back on exception', function () {
+    try {
+        transactioner()->execute(function () {
             DB::table('orders')->insert(['customer' => 'alice', 'amount' => 100, 'status' => 'pending']);
-
-            return 'done';
+            throw new \RuntimeException('boom');
         });
-
-        $this->assertSame('done', $result);
-        $this->assertSame(1, DB::table('orders')->count());
+    } catch (\RuntimeException) {
     }
 
-    public function test_execute_rolls_back_on_exception(): void
-    {
-        try {
-            $this->transactioner()->execute(function () {
-                DB::table('orders')->insert(['customer' => 'alice', 'amount' => 100, 'status' => 'pending']);
+    expect(DB::table('orders')->count())->toBe(0);
+});
+
+test('on throw hook receives the exception', function () {
+    $seen = null;
+
+    try {
+        transactioner()
+            ->onThrow(function (\Throwable $e) use (&$seen) {
+                $seen = $e;
+            })
+            ->execute(fn() => throw new \RuntimeException('original'));
+    } catch (\RuntimeException) {
+    }
+
+    expect($seen?->getMessage())->toBe('original');
+});
+
+test('execute with events dispatches after commit', function () {
+    $dispatched = [];
+    $dispatcher = function (GenericDomainEvent $e) use (&$dispatched) {
+        $dispatched[] = $e->getName();
+    };
+
+    $domainObject = makeDomainObject();
+    $domainObject->recordEvent('order.placed', []);
+
+    transactioner()->executeWithEvents(
+        fn() => $domainObject,
+        dispatcher: $dispatcher
+    );
+
+    expect($dispatched)->toBe(['order.placed']);
+});
+
+test('execute with events does not dispatch on failure', function () {
+    $dispatched = [];
+    $dispatcher = function (GenericDomainEvent $e) use (&$dispatched) {
+        $dispatched[] = $e->getName();
+    };
+
+    $domainObject = makeDomainObject();
+    $domainObject->recordEvent('order.placed', []);
+
+    try {
+        transactioner()->executeWithEvents(
+            function () use ($domainObject) {
+                DB::table('orders')->insert(['customer' => 'bob', 'amount' => 50, 'status' => 'pending']);
                 throw new \RuntimeException('boom');
-            });
-        } catch (\RuntimeException) {
-        }
 
-        $this->assertSame(0, DB::table('orders')->count());
-    }
-
-    public function test_on_throw_hook_receives_the_exception(): void
-    {
-        $seen = null;
-
-        try {
-            $this->transactioner()
-                ->onThrow(function (\Throwable $e) use (&$seen) {
-                    $seen = $e;
-                })
-                ->execute(fn() => throw new \RuntimeException('original'));
-        } catch (\RuntimeException) {
-        }
-
-        $this->assertSame('original', $seen?->getMessage());
-    }
-
-    public function test_execute_with_events_dispatches_after_commit(): void
-    {
-        $dispatched = [];
-        $dispatcher = function (GenericDomainEvent $e) use (&$dispatched) {
-            $dispatched[] = $e->getName();
-        };
-
-        $domainObject = $this->makeDomainObject();
-        $domainObject->recordEvent('order.placed', []);
-
-        $this->transactioner()->executeWithEvents(
-            fn() => $domainObject,
+                return $domainObject;
+            },
             dispatcher: $dispatcher
         );
-
-        $this->assertSame(['order.placed'], $dispatched);
+    } catch (\RuntimeException) {
     }
 
-    public function test_execute_with_events_does_not_dispatch_on_failure(): void
-    {
-        $dispatched = [];
-        $dispatcher = function (GenericDomainEvent $e) use (&$dispatched) {
-            $dispatched[] = $e->getName();
-        };
+    expect($dispatched)->toBe([]);
+    expect(DB::table('orders')->count())->toBe(0);
+});
 
-        $domainObject = $this->makeDomainObject();
-        $domainObject->recordEvent('order.placed', []);
+test('custom dispatcher is used instead of laravel event', function () {
+    $custom = [];
+    $domainObject = makeDomainObject();
+    $domainObject->recordEvent('something.happened', ['key' => 'value']);
 
-        try {
-            $this->transactioner()->executeWithEvents(
-                function () use ($domainObject) {
-                    DB::table('orders')->insert(['customer' => 'bob', 'amount' => 50, 'status' => 'pending']);
-                    throw new \RuntimeException('boom');
-
-                    return $domainObject;
-                },
-                dispatcher: $dispatcher
-            );
-        } catch (\RuntimeException) {
+    transactioner()->executeWithEvents(
+        fn() => $domainObject,
+        dispatcher: function (GenericDomainEvent $e) use (&$custom) {
+            $custom[] = [$e->getName(), $e->getPayload()];
         }
+    );
 
-        $this->assertSame([], $dispatched);
-        $this->assertSame(0, DB::table('orders')->count());
-    }
+    expect($custom)->toHaveCount(1);
+    expect($custom[0][0])->toBe('something.happened');
+    expect($custom[0][1])->toBe(['key' => 'value']);
+});
 
-    public function test_custom_dispatcher_is_used_instead_of_laravel_event(): void
-    {
-        $custom = [];
-        $domainObject = $this->makeDomainObject();
-        $domainObject->recordEvent('something.happened', ['key' => 'value']);
-
-        $this->transactioner()->executeWithEvents(
-            fn() => $domainObject,
-            dispatcher: function (GenericDomainEvent $e) use (&$custom) {
-                $custom[] = [$e->getName(), $e->getPayload()];
-            }
-        );
-
-        $this->assertCount(1, $custom);
-        $this->assertSame('something.happened', $custom[0][0]);
-        $this->assertSame(['key' => 'value'], $custom[0][1]);
-    }
-
-    private function makeDomainObject(): Order
-    {
-        return new Order(1, 'test', 0);
-    }
+function makeDomainObject(): Order
+{
+    return new Order(1, 'test', 0);
 }

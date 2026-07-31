@@ -12,7 +12,7 @@ interface HasDomainEvents
     /**
      * Get the recorded events
      *
-     * @return array<string, mixed>
+     * @return list<IsDomainEvent>
      */
     public function getRecordedEvents(): array;
 

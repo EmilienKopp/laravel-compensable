@@ -7,13 +7,13 @@ use Splitstack\Conveyor\Contracts\IsDomainEvent;
 final class GenericDomainEvent implements IsDomainEvent
 {
     public function __construct(
-        private readonly string $name,
-        private readonly mixed $payload,
+        public readonly string $event,
+        public readonly mixed $payload,
     ) {}
 
     public function getName(): string
     {
-        return $this->name;
+        return $this->event;
     }
 
     public function getPayload(): mixed

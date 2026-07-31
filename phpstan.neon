@@ -7,3 +7,8 @@ parameters:
         - src
 
     reportUnmatchedIgnoredErrors: true
+
+    ignoreErrors:
+        # Consumer-facing traits: meant to be mixed into the package user's
+        # own classes, so they're never used within src/ itself.
+        - identifier: trait.unused
