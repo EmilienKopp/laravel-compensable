@@ -29,7 +29,7 @@ class BookShipment extends Action
         return $ref;
     }
 
-    public function undo(mixed $result = null): void
+    public function rewind(mixed $result = null): void
     {
         $this->shipping->cancel($result);
     }

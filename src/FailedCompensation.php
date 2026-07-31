@@ -2,17 +2,17 @@
 
 namespace Splitstack\Conveyor;
 
-use Splitstack\Conveyor\Contracts\Undoable;
+use Splitstack\Conveyor\Contracts\Rewindable;
 
 /**
- * Full context of a failed undo(), handed to the onCompensationFailed hook.
+ * Full context of a failed rewind(), handed to the onCompensationFailed hook.
  */
 final class FailedCompensation
 {
     public readonly \DateTimeImmutable $failedAt;
 
     public function __construct(
-        public readonly Undoable $action,
+        public readonly Rewindable $action,
         public readonly mixed $result,
         public readonly \Throwable $exception,
         public readonly ?\Throwable $cause = null,
@@ -26,6 +26,6 @@ final class FailedCompensation
      */
     public function retry(): void
     {
-        $this->action->undo($this->result);
+        $this->action->rewind($this->result);
     }
 }

@@ -32,6 +32,7 @@ final class CheckoutWorkflow extends WorkflowPipeline
 
         /** @var CheckoutPayload */
         return $this
+            ->transacts()
             ->steps([$this->placeOrder])
             ->skippable($this->bookShipment, fn (CheckoutPayload $p) => $p->get('shippable', true))
             ->run($payload);

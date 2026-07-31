@@ -4,7 +4,7 @@ namespace Splitstack\Conveyor\Tests\Fixtures\Actions;
 
 use Splitstack\Conveyor\Concerns\IsSteppable;
 use Splitstack\Conveyor\Contracts\Steppable;
-use Splitstack\Conveyor\Contracts\Undoable;
+use Splitstack\Conveyor\Contracts\Rewindable;
 use Splitstack\Conveyor\Tests\Fixtures\Payloads\CheckoutPayload;
 use Splitstack\Conveyor\WorkflowAbortedException;
 
@@ -12,7 +12,7 @@ use Splitstack\Conveyor\WorkflowAbortedException;
  * Guard step: gracefully stops the workflow when there is nothing left
  * to do — completed work is kept, later steps never run.
  */
-class AbortUnlessShippable implements Steppable, Undoable
+class AbortUnlessShippable implements Steppable, Rewindable
 {
     use IsSteppable;
 
@@ -23,5 +23,5 @@ class AbortUnlessShippable implements Steppable, Undoable
         }
     }
 
-    public function undo(mixed $result = null): void {}
+    public function rewind(mixed $result = null): void {}
 }

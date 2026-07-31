@@ -4,17 +4,17 @@ namespace Splitstack\Conveyor\Tests\Fixtures\Steps;
 
 use Splitstack\Conveyor\Concerns\IsSteppable;
 use Splitstack\Conveyor\Contracts\Steppable;
-use Splitstack\Conveyor\Contracts\Undoable;
+use Splitstack\Conveyor\Contracts\Rewindable;
 use Splitstack\Conveyor\Tests\Fixtures\Actions\BookShipment;
 use Splitstack\Conveyor\Tests\Fixtures\Payloads\CheckoutPayload;
 
 /**
  * Declares its dependency on a mid-pipeline value: without an 'order'
  * in the payload, the step self-skips (and is never tracked for undo).
- * undo() receives the passable, so compensation context comes from the
+ * rewind() receives the passable, so compensation context comes from the
  * payload — not from a DB row that may already be rolled back.
  */
-class BookShipmentStep implements Steppable, Undoable
+class BookShipmentStep implements Steppable, Rewindable
 {
     use IsSteppable;
 
@@ -32,9 +32,9 @@ class BookShipmentStep implements Steppable, Undoable
         $payload->set('shipmentRef', $ref);
     }
 
-    public function undo(mixed $result = null): void
+    public function rewind(mixed $result = null): void
     {
         /** @var CheckoutPayload $result */
-        $this->bookShipment->undo($result->get('shipmentRef'));
+        $this->bookShipment->rewind($result->get('shipmentRef'));
     }
 }

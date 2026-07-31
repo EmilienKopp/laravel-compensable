@@ -14,7 +14,7 @@ abstract class UseCase extends TransactionalBoundary implements TransactionalUni
 {
     abstract public function handle(...$args): mixed;
 
-    public function undo(mixed $result = null): void
+    public function rewind(mixed $result = null): void
     {
         $this->compensate();
     }

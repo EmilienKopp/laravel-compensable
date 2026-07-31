@@ -27,7 +27,7 @@ class CreateOrder extends Action
         return new Order($id, $customer, $amount);
     }
 
-    public function undo(mixed $result = null): void
+    public function rewind(mixed $result = null): void
     {
         // DB-only mutation — rollback is owned by the transaction.
     }

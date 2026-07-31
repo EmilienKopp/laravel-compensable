@@ -30,7 +30,7 @@ class SpyAction extends Action
         return $this->name;
     }
 
-    public function undo(mixed $result = null): void
+    public function rewind(mixed $result = null): void
     {
         if ($this->failOnUndo) {
             throw new \RuntimeException("undo of {$this->name} failed");

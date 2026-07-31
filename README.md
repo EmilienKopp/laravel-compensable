@@ -176,7 +176,7 @@ public function requires(): array
 
 ## Workflows
 
-Extend `WorkflowPipeline` and call `steps()` / `skippable()` / `run()`. The whole sequence is wrapped in one DB transaction; inner UseCase transactions become savepoints.
+Extend `WorkflowPipeline` and call `steps()` / `skippable()` / `run()`. Call `transacts()` to wrap the whole sequence in one DB transaction (inner UseCase transactions become savepoints). Without it, each step commits on its own and only external state is compensated on failure.
 
 ```php
 final class CheckoutWorkflow extends WorkflowPipeline
@@ -193,6 +193,7 @@ final class CheckoutWorkflow extends WorkflowPipeline
     public function checkout(CheckoutPayload $payload): CheckoutPayload
     {
         return $this
+            ->transacts()
             ->steps([$this->placeOrder, $this->awardLoyalty])
             ->skippable($this->bookShipment, fn(CheckoutPayload $p) => $p->get('shippable', true))
             ->run($payload);
@@ -204,6 +205,37 @@ On failure at any step:
 
 1. **DB**: the outer transaction rolls back all writes from all steps, including released savepoints.
 2. **External state**: `undo()` cascades in reverse through every completed step.
+
+---
+
+## Delegation (async steps)
+
+Some steps don't need to run in-band: a webhook notification, a downstream sync, anything that can happen after the request commits. Mark them with `delegate()` and they are dispatched to the queue instead of invoked inline.
+
+```php
+return $this
+    ->transacts()
+    ->steps([$this->placeOrder])
+    ->delegate($this->notifyWarehouse)        // runs on the queue
+    ->run($payload);
+```
+
+This is an unopinionated option, not a policy. What the package does and does not do:
+
+- **Dispatch, not run.** A delegated step is dispatched via `ConveyorStepJob`, which carries the step's class name and the payload. On the worker the step is rebuilt from the container (collaborators re-injected, never serialized). It is *not* tracked on the parent's rewind stack.
+- **Self-compensation.** When the job exhausts its retries, its `failed()` hook calls the step's own `rewind()`. Delegated steps compensate themselves; the parent workflow's cascade does not reach them.
+- **Retry policy.** If the step declares `getRetryConfig()`, it maps onto the job: `tries` → `$tries`, `retryAfterSeconds` → `$backoff`, `timeoutSeconds` → `$timeout`. No config means a single attempt.
+- **`afterCommit` (default on).** By default dispatch waits for the surrounding transaction to commit, so inline / `transacts()` writes land before the worker reads them. Pass `delegate($step, afterCommit: false)` to dispatch immediately — your call.
+- **Ordering.** Multiple `delegate()` calls form a single chain in declaration order. If a terminal step depends on delegated work finishing, delegate it too as the chain tail (or move it into a chain callback).
+- **Serialization is yours.** There is no `SerializablePayload` contract and no runtime guard. If the payload doesn't serialize, Laravel throws — that's the signal. Idempotency and payload independence are the developer's responsibility.
+
+Domain events are the alternative when you want post-commit side effects without the queue. The package holds no opinion on which you reach for.
+
+```php
+->delegate($step)                       // afterCommit, retries from getRetryConfig()
+->delegate($step, afterCommit: false)   // dispatch now, don't wait for commit
+->delegate($step, when: fn ($p) => $p->get('notify'))  // conditional
+```
 
 ---
 
@@ -285,6 +317,109 @@ $scope->onStepFailed(function (FailedStep $f): void {
 | UseCase called standalone         | outermost transaction, commits immediately     |
 
 `DB::afterCommit` defers to the outermost transaction in all cases. Events recorded inside a UseCase nested in a pipeline fire only when the pipeline itself commits.
+
+---
+
+## Diagrams
+
+### Compensation hierarchy
+
+Both `WorkflowPipeline` and `TransactionalBoundary` use the `ManagesUndoStack` trait, so each has its own undo stack. On failure, each layer calls `compensate()` on what it directly tracked: the pipeline compensates its Steps, each UseCase compensates its own Actions (and nested UseCases cascade further).
+
+```mermaid
+graph TD
+    WP["WorkflowPipeline\n(ManagesUndoStack)"]
+
+    subgraph PipelineScope ["↩ Pipeline compensates these on failure (in reverse)"]
+        S1["Step 1  (Undoable)"]
+        S2["Step 2  (Undoable)"]
+    end
+
+    UC1["UseCase 1\nTransactionalBoundary\n(ManagesUndoStack)"]
+    UC2["UseCase 2\nTransactionalBoundary\n(ManagesUndoStack)"]
+
+    subgraph UC1Scope ["↩ UseCase 1 compensates these on failure (in reverse)"]
+        A1["Action A  (Undoable)"]
+        A2["Action B  (Undoable)"]
+    end
+
+    subgraph UC2Scope ["↩ UseCase 2 compensates these on failure (in reverse)"]
+        A3["Action C  (Undoable)"]
+        A4["Nested UseCase  (Undoable)\ncascades to its own inner Actions"]
+    end
+
+    WP --> S1
+    WP --> S2
+    S1 -->|wraps| UC1
+    S2 -->|wraps| UC2
+    UC1 --> A1
+    UC1 --> A2
+    UC2 --> A3
+    UC2 --> A4
+```
+
+When Action C (inside Step 2 / UseCase 2) fails, the unwinding is:
+
+1. `UseCase 2` catches → `DB::rollBack()` to savepoint → `compensate()` → `Action C.undo()` (external side-effects only)
+2. Exception bubbles to `WorkflowPipeline` → `DB::rollBack()` real transaction (wipes all DB writes) → `compensate()` → `Step 1.undo()` (Step 2 never completed, so it was never tracked)
+
+---
+
+### Execution sequence
+
+`WorkflowPipeline` and `TransactionalBoundary` both call `DB::beginTransaction()` via `Transactioner`. Laravel handles nesting with savepoints: the first call opens a real transaction; nested calls create a savepoint. The pipeline holds the outer transaction; each UseCase inside runs on a savepoint. On failure, the UseCase rolls back to its savepoint and calls `compensate()` on its actions, then the exception bubbles up and the pipeline rolls back the real transaction and calls `compensate()` on completed Steps.
+
+```mermaid
+sequenceDiagram
+    participant C as Caller
+    participant WP as WorkflowPipeline
+    participant S as Step adapter
+    participant UC as UseCase (TransactionalBoundary)
+    participant A1 as Action or UseCase 1
+    participant A2 as Action or UseCase 2
+    participant Ext as External API
+
+    C->>WP: run(payload)
+    WP->>WP: DB::beginTransaction() — real transaction (level 1)
+
+    loop for each Step
+        WP->>S: invoke(payload)
+        S->>S: extract typed args from payload
+        S->>UC: handle(args)
+
+        UC->>UC: DB::beginTransaction() — savepoint (level 2)
+
+        UC->>A1: step(action1, args)
+        note over A1: Action or nested UseCase —<br/>either way it's Undoable
+        A1->>Ext: external call (e.g. charge)
+        Ext-->>A1: result
+        A1-->>UC: result  [tracked for undo]
+
+        UC->>A2: step(action2, args)
+        note over A2: if this is a nested UseCase,<br/>its own undo() cascades to its inner Actions
+        A2-->>UC: result  [tracked for undo]
+
+        alt all actions succeed
+            UC->>UC: DB::commit() — releases savepoint (level 2→1)
+            note over UC: DB writes stay in the outer transaction<br/>until the pipeline commits
+            UC-->>S: return result
+            S->>S: write result back to payload
+            S-->>WP: done
+        else any action fails
+            UC->>UC: DB::rollBack() — rollback to savepoint (level 2→1)
+            UC->>A2: undo()  [reverse order — external side-effects only]
+            UC->>A1: undo()
+            A1->>Ext: compensate (e.g. refund)
+            UC-->>WP: raise exception
+            WP->>WP: DB::rollBack() — rollback real transaction (level 1→0)
+            note over WP: wipes all remaining DB writes<br/>from all Steps in this run
+            WP->>S: undo() previously completed Steps
+        end
+    end
+
+    WP->>WP: DB::commit() — commits real transaction (level 1→0)
+    WP-->>C: completed / exception
+```
 
 ---
 

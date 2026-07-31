@@ -5,12 +5,12 @@ namespace Splitstack\Conveyor\Concerns;
 use Closure;
 use Illuminate\Support\Facades\Log;
 use Splitstack\Conveyor\FailedCompensation;
-use Splitstack\Conveyor\Contracts\Undoable;
+use Splitstack\Conveyor\Contracts\Rewindable;
 
-trait ManagesUndoStack
+trait ManagesRewindStack
 {
-    /** @var array{0: Undoable, 1: mixed}[] */
-    private array $undoStack = [];
+    /** @var array{0: Rewindable, 1: mixed}[] */
+    private array $rewindStack = [];
 
     private ?Closure $onCompensationFailed = null;
 
@@ -22,27 +22,27 @@ trait ManagesUndoStack
         return $this;
     }
 
-    protected function track(Undoable $action, mixed $result = null): void
+    protected function track(Rewindable $action, mixed $result = null): void
     {
-        $this->undoStack[] = [$action, $result];
+        $this->rewindStack[] = [$action, $result];
     }
 
     public function compensate(?\Throwable $cause = null): void
     {
-        foreach (array_reverse($this->undoStack) as [$action, $result]) {
+        foreach (array_reverse($this->rewindStack) as [$action, $result]) {
             try {
-                $action->undo($result);
+                $action->rewind($result);
             } catch (\Throwable $e) {
                 $this->reportCompensationFailure(new FailedCompensation($action, $result, $e, $cause));
             }
         }
 
-        $this->resetUndoStack();
+        $this->resetRewindStack();
     }
 
-    protected function resetUndoStack(): void
+    protected function resetRewindStack(): void
     {
-        $this->undoStack = [];
+        $this->rewindStack = [];
     }
 
     private function reportCompensationFailure(FailedCompensation $failure): void

@@ -82,7 +82,7 @@ class WorkflowPipelineTest extends TestCase
         $this->assertSame(0, DB::table('orders')->count());
 
         // the charge is external — compensated via the undo cascade:
-        // pipeline → PlaceOrder->undo() → ChargePayment->undo(chargeId)
+        // pipeline → PlaceOrder->rewind() → ChargePayment->rewind(chargeId)
         $charged = array_keys($this->gateway->charges);
         $this->assertCount(1, $charged);
         $this->assertSame($charged, $this->gateway->refunds);

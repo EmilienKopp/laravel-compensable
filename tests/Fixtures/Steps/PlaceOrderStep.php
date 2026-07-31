@@ -4,7 +4,7 @@ namespace Splitstack\Conveyor\Tests\Fixtures\Steps;
 
 use Splitstack\Conveyor\Concerns\IsSteppable;
 use Splitstack\Conveyor\Contracts\Steppable;
-use Splitstack\Conveyor\Contracts\Undoable;
+use Splitstack\Conveyor\Contracts\Rewindable;
 use Splitstack\Conveyor\Tests\Fixtures\Payloads\CheckoutPayload;
 use Splitstack\Conveyor\Tests\Fixtures\UseCases\PlaceOrder;
 
@@ -13,7 +13,7 @@ use Splitstack\Conveyor\Tests\Fixtures\UseCases\PlaceOrder;
  * already exists, writes the result back. Compensation delegates to the
  * UseCase's own cascade.
  */
-class PlaceOrderStep implements Steppable, Undoable
+class PlaceOrderStep implements Steppable, Rewindable
 {
     use IsSteppable;
 
@@ -26,8 +26,8 @@ class PlaceOrderStep implements Steppable, Undoable
         $payload->set('order', $order);
     }
 
-    public function undo(mixed $result = null): void
+    public function rewind(mixed $result = null): void
     {
-        $this->placeOrder->undo();
+        $this->placeOrder->rewind();
     }
 }

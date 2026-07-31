@@ -30,7 +30,7 @@ class FlakeyAction extends Action
         return "ok:{$this->calls}";
     }
 
-    public function undo(mixed $result = null): void {}
+    public function rewind(mixed $result = null): void {}
 
     public function getRetryConfig(): ?RetryConfig
     {

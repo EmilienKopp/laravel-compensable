@@ -9,7 +9,7 @@ use Splitstack\Conveyor\Tests\Fixtures\External\FakePaymentGateway;
 
 /**
  * Mixed action: the DB update rolls back with the transaction; the remote
- * charge does not — undo() refunds it, using the chargeId that handle()
+ * charge does not — rewind() refunds it, using the chargeId that handle()
  * returned (never a DB lookup: that row may already be rolled back).
  *
  * @extends Action<string>
@@ -33,7 +33,7 @@ class ChargePayment extends Action
         return $chargeId;
     }
 
-    public function undo(mixed $result = null): void
+    public function rewind(mixed $result = null): void
     {
         $this->gateway->refund($result);
     }

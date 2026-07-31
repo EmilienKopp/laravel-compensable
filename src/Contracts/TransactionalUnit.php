@@ -7,7 +7,7 @@ use Splitstack\Conveyor\RetryConfig;
 /**
  * @template T
  */
-interface TransactionalUnit extends Undoable
+interface TransactionalUnit extends Rewindable
 {
     /**
      * Perform a process
