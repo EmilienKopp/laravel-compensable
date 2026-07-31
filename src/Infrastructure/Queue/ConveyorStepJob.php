@@ -1,6 +1,6 @@
 <?php
 
-namespace Splitstack\Conveyor;
+namespace Splitstack\Conveyor\Infrastructure\Queue;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -9,6 +9,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Splitstack\Conveyor\Contracts\Rewindable;
 use Splitstack\Conveyor\Contracts\Steppable;
+use Splitstack\Conveyor\Data\RetryConfig;
 
 /**
  * Runs a delegated step on the queue. Carries the step's class name and
@@ -18,8 +19,8 @@ use Splitstack\Conveyor\Contracts\Steppable;
  * throws, and that's the signal.
  *
  * Retry policy comes from the step's getRetryConfig(): tries drives
- * $tries, retryAfterSeconds drives $backoff, timeoutSeconds drives
- * $timeout. A null config means a single attempt.
+ * $tries, backoff drives $backoff, timeout drives $timeout. A null
+ * config means a single attempt.
  *
  * Compensation is self-contained: once retries are exhausted, failed()
  * calls the step's rewind(). The parent pipeline's rewind stack does not
@@ -83,7 +84,7 @@ class ConveyorStepJob implements ShouldQueue
         }
 
         $this->tries = $config->tries;
-        $this->backoff = $config->retryAfterSeconds;
-        $this->timeout = $config->timeoutSeconds;
+        $this->backoff = $config->backoff;
+        $this->timeout = $config->timeout;
     }
 }

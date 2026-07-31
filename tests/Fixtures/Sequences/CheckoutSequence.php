@@ -1,18 +1,18 @@
 <?php
 
-namespace Splitstack\Conveyor\Tests\Fixtures\Workflows;
+namespace Splitstack\Conveyor\Tests\Fixtures\Sequences;
 
 use Splitstack\Conveyor\Infrastructure\Transaction\Transactioner;
 use Splitstack\Conveyor\Tests\Fixtures\Payloads\CheckoutPayload;
 use Splitstack\Conveyor\Tests\Fixtures\Steps\BookShipmentStep;
 use Splitstack\Conveyor\Tests\Fixtures\Steps\PlaceOrderStep;
-use Splitstack\Conveyor\WorkflowPipeline;
+use Splitstack\Conveyor\Sequence;
 
 /**
- * The target consuming syntax: a named workflow IS a WorkflowPipeline,
+ * The target consuming syntax: a named sequence IS a Sequence,
  * Steps injected via constructor, sequenced fluently.
  */
-final class CheckoutWorkflow extends WorkflowPipeline
+final class CheckoutSequence extends Sequence
 {
     public function __construct(
         Transactioner $transactioner,

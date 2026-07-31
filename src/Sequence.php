@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Splitstack\Conveyor;
 
 use Closure;
@@ -9,13 +11,16 @@ use Splitstack\Conveyor\Concerns\ManagesRewindStack;
 use Splitstack\Conveyor\Contracts\Skippable;
 use Splitstack\Conveyor\Contracts\Rewindable;
 use Splitstack\Conveyor\Contracts\Steppable;
+use Splitstack\Conveyor\Data\Stage;
+use Splitstack\Conveyor\Exceptions\SequenceAbortedException;
+use Splitstack\Conveyor\Infrastructure\Queue\ConveyorStepJob;
 use Splitstack\Conveyor\Infrastructure\Transaction\Transactioner;
 
-class WorkflowPipeline
+class Sequence
 {
     use ManagesRewindStack;
 
-    /** @var array{pipes: array<callable>, when: callable|bool, delegated?: bool, afterCommit?: bool}[] */
+    /** @var Stage[] */
     private array $stages = [];
 
     private bool $runInTransaction = false;
@@ -25,7 +30,7 @@ class WorkflowPipeline
     /** @param array<callable|Steppable> $steps */
     public function steps(array $steps): static
     {
-        $this->stages[] = ['pipes' => $steps, 'when' => true];
+        $this->stages[] = new Stage(steps: $steps, when: true);
 
         return $this;
     }
@@ -33,7 +38,7 @@ class WorkflowPipeline
     /** @param Closure|Steppable|array<Closure|Steppable> $steps */
     public function skippable(callable|array $steps, callable|bool $when): static
     {
-        $this->stages[] = ['pipes' => \is_array($steps) ? $steps : [$steps], 'when' => $when];
+        $this->stages[] = new Stage(steps: \is_array($steps) ? $steps : [$steps], when: $when);
 
         return $this;
     }
@@ -52,12 +57,12 @@ class WorkflowPipeline
      */
     public function delegate(Steppable $step, bool $afterCommit = true, ?callable $when = null): static
     {
-        $this->stages[] = [
-            'pipes'       => [$step],
-            'when'        => $when ?? true,
-            'delegated'   => true,
-            'afterCommit' => $afterCommit,
-        ];
+        $this->stages[] = new Stage(
+            steps: [$step],
+            when: $when ?? true,
+            delegated: true,
+            afterCommit: $afterCommit,
+        );
 
         return $this;
     }
@@ -65,6 +70,13 @@ class WorkflowPipeline
     public function transacts(): static
     {
         $this->runInTransaction = true;
+
+        return $this;
+    }
+
+    public function dontTransact(): static
+    {
+        $this->runInTransaction = false;
 
         return $this;
     }
@@ -91,9 +103,10 @@ class WorkflowPipeline
         $stages = $this->stages;
         $this->stages = [];
         $this->resetRewindStack();
+        $this->dontTransact();
 
-        $inline = array_filter($stages, static fn (array $s): bool => empty($s['delegated']));
-        $delegated = array_filter($stages, static fn (array $s): bool => ! empty($s['delegated']));
+        $inline = array_filter($stages, static fn (Stage $s): bool => ! $s->delegated);
+        $delegated = array_filter($stages, static fn (Stage $s): bool => $s->delegated);
 
         $wrapped = array_map(
             fn (mixed $pipe) => $this->wrap($pipe),
@@ -102,7 +115,7 @@ class WorkflowPipeline
 
         try {
             (new Pipeline(app()))->send($passable)->through($wrapped)->thenReturn();
-        } catch (WorkflowAbortedException) {
+        } catch (SequenceAbortedException) {
             // graceful early exit — completed work commits, no compensation,
             // and the delegated tail is never dispatched
             return $passable;
@@ -113,37 +126,39 @@ class WorkflowPipeline
         return $passable;
     }
 
-    /** @param array{pipes: array<callable>, when: callable|bool, afterCommit: bool}[] $stages */
+    /** @param Stage[] $stages */
     private function dispatchDelegated(array $stages, mixed $passable): void
     {
         $jobs = [];
         $afterCommit = true;
 
         foreach ($stages as $stage) {
-            $when = $stage['when'];
+            $when = $stage->when;
 
             if ($when !== true && ! (\is_callable($when) && $when($passable))) {
                 continue;
             }
 
-            foreach ($stage['pipes'] as $step) {
+            foreach ($stage->steps as $step) {
                 if ($step instanceof Skippable && $step->skips($passable)) {
                     continue;
                 }
 
-                $jobs[] = ConveyorStepJob::for($step, $passable);
-                $afterCommit = $afterCommit && $stage['afterCommit'];
+                $job = ConveyorStepJob::for($step, $passable);
+
+                if($stage->afterCommit === true) {
+                    $job->afterCommit();
+                } else {
+                    $job->beforeCommit();
+                }
+
+                $jobs[] = $job;
+                $afterCommit = $afterCommit && $stage->afterCommit;
             }
         }
 
         if ($jobs === []) {
             return;
-        }
-
-        // afterCommit is a chain-level concern: the head job's flag governs
-        // dispatch timing. Wait for commit unless any delegate() opted out.
-        if ($afterCommit) {
-            $jobs[0]->afterCommit();
         }
 
         Bus::chain($jobs)->dispatch();
@@ -172,10 +187,10 @@ class WorkflowPipeline
         $pipes = [];
 
         foreach ($stages as $stage) {
-            $when = $stage['when'];
+            $when = $stage->when;
 
             if ($when === true || (\is_callable($when) && $when($passable))) {
-                array_push($pipes, ...$stage['pipes']);
+                array_push($pipes, ...$stage->steps);
             }
         }
 

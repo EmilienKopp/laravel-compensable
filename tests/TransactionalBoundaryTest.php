@@ -3,7 +3,7 @@
 namespace Splitstack\Conveyor\Tests;
 
 use Splitstack\Conveyor\TransactionalBoundary;
-use Splitstack\Conveyor\FailedCompensation;
+use Splitstack\Conveyor\Data\FailedCompensation;
 use Splitstack\Conveyor\Infrastructure\Transaction\Transactioner;
 use Splitstack\Conveyor\Tests\Fixtures\Actions\SpyAction;
 

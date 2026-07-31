@@ -1,6 +1,6 @@
 <?php
 
-namespace Splitstack\Conveyor\Domain\Concerns;
+namespace Splitstack\Conveyor\Concerns;
 
 
 class RecordsEvents

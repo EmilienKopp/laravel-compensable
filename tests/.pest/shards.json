@@ -1,0 +1,12 @@
+{
+    "timings": {
+        "Splitstack\\Conveyor\\Tests\\DelegateTest": 0.0821,
+        "Splitstack\\Conveyor\\Tests\\RetryTest": 0.0236,
+        "Splitstack\\Conveyor\\Tests\\SequenceTest": 0.0218,
+        "Splitstack\\Conveyor\\Tests\\TransactionalBoundaryTest": 0.0117,
+        "Splitstack\\Conveyor\\Tests\\TransactionerTest": 0.016,
+        "Splitstack\\Conveyor\\Tests\\UseCaseTest": 0.0066
+    },
+    "checksum": "14e18d4c1aa91fe581acb4e657f8bd43",
+    "updated_at": "2026-07-31T22:46:16+00:00"
+}

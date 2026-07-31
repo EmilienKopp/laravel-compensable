@@ -10,7 +10,7 @@ interface Rewindable
      * never try to reverse database writes.
      *
      * For Actions and UseCases, $result is what handle() returned.
-     * For pipeline steps, $result is the workflow passable.
+     * For pipeline steps, $result is the sequence passable.
      */
     public function rewind(mixed $result = null): void;
 }

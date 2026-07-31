@@ -10,7 +10,7 @@ use Splitstack\Conveyor\Tests\Fixtures\Domain\Order;
 
 /**
  * One business operation, one (save-pointed) transaction, two Actions.
- * Knows nothing about workflows or payloads — a Step adapts it into a
+ * Knows nothing about sequences or payloads — a Step adapts it into a
  * pipeline. Domain events recorded on the Order are dispatched only
  * after the outermost transaction commits.
  */

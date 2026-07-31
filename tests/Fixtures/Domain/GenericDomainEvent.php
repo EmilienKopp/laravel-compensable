@@ -2,7 +2,7 @@
 
 namespace Splitstack\Conveyor\Tests\Fixtures\Domain;
 
-use Splitstack\Conveyor\Domain\Contracts\IsDomainEvent;
+use Splitstack\Conveyor\Contracts\IsDomainEvent;
 
 final class GenericDomainEvent implements IsDomainEvent
 {

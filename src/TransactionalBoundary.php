@@ -6,6 +6,7 @@ use Closure;
 use Illuminate\Support\Facades\Log;
 use Splitstack\Conveyor\Concerns\ManagesRewindStack;
 use Splitstack\Conveyor\Contracts\TransactionalUnit;
+use Splitstack\Conveyor\Data\FailedStep;
 use Splitstack\Conveyor\Infrastructure\Transaction\Transactioner;
 
 class TransactionalBoundary
@@ -85,7 +86,7 @@ class TransactionalBoundary
                     break;
                 }
 
-                sleep($config->retryAfterSeconds);
+                sleep($config->backoff);
             }
         }
 

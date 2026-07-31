@@ -2,7 +2,7 @@
 
 namespace Splitstack\Conveyor\Contracts;
 
-abstract class WorkflowPayload
+abstract class SequencePayload
 {
     private array $bag = [];
 

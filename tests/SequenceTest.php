@@ -4,7 +4,7 @@ namespace Splitstack\Conveyor\Tests;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
-use Splitstack\Conveyor\FailedCompensation;
+use Splitstack\Conveyor\Data\FailedCompensation;
 use Splitstack\Conveyor\Infrastructure\Transaction\Transactioner;
 use Splitstack\Conveyor\Tests\Fixtures\Actions\AbortUnlessShippable;
 use Splitstack\Conveyor\Tests\Fixtures\Actions\BookShipment;
@@ -19,10 +19,10 @@ use Splitstack\Conveyor\Tests\Fixtures\Steps\AwardLoyaltyPointsStep;
 use Splitstack\Conveyor\Tests\Fixtures\Steps\BookShipmentStep;
 use Splitstack\Conveyor\Tests\Fixtures\Steps\PlaceOrderStep;
 use Splitstack\Conveyor\Tests\Fixtures\UseCases\PlaceOrder;
-use Splitstack\Conveyor\Tests\Fixtures\Workflows\CheckoutWorkflow;
-use Splitstack\Conveyor\WorkflowPipeline;
+use Splitstack\Conveyor\Tests\Fixtures\Sequences\CheckoutSequence;
+use Splitstack\Conveyor\Sequence;
 
-class WorkflowPipelineTest extends TestCase
+class SequenceTest extends TestCase
 {
     private FakePaymentGateway $gateway;
 
@@ -30,7 +30,7 @@ class WorkflowPipelineTest extends TestCase
 
     private PlaceOrder $placeOrder;
 
-    private CheckoutWorkflow $workflow;
+    private CheckoutSequence $sequence;
 
     protected function setUp(): void
     {
@@ -43,7 +43,7 @@ class WorkflowPipelineTest extends TestCase
             new CreateOrder,
             new ChargePayment($this->gateway),
         );
-        $this->workflow = new CheckoutWorkflow(
+        $this->sequence = new CheckoutSequence(
             new Transactioner,
             new PlaceOrderStep($this->placeOrder),
             new BookShipmentStep(new BookShipment($this->shipping)),
@@ -54,7 +54,7 @@ class WorkflowPipelineTest extends TestCase
     {
         Event::fake([GenericDomainEvent::class]);
 
-        $payload = $this->workflow->checkout('alice', 100);
+        $payload = $this->sequence->checkout('alice', 100);
 
         $row = DB::table('orders')->sole();
         $this->assertSame('paid', $row->status);
@@ -71,7 +71,7 @@ class WorkflowPipelineTest extends TestCase
         $this->shipping->failNextBooking = true;
 
         try {
-            $this->workflow->checkout('alice', 100);
+            $this->sequence->checkout('alice', 100);
             $this->fail('expected exception');
         } catch (\RuntimeException $e) {
             $this->assertSame('carrier API timeout', $e->getMessage());
@@ -106,7 +106,7 @@ class WorkflowPipelineTest extends TestCase
         );
 
         try {
-            $this->workflow->checkout('alice', 100);
+            $this->sequence->checkout('alice', 100);
             $this->fail('expected exception');
         } catch (\RuntimeException) {
         }
@@ -124,7 +124,7 @@ class WorkflowPipelineTest extends TestCase
 
     public function test_skippable_steps_are_skipped_when_the_predicate_fails(): void
     {
-        $this->workflow->checkout('bob', 50, shippable: false);
+        $this->sequence->checkout('bob', 50, shippable: false);
 
         $row = DB::table('orders')->sole();
         $this->assertSame('paid', $row->status);
@@ -138,7 +138,7 @@ class WorkflowPipelineTest extends TestCase
         $this->shipping->failNextBooking = true;
 
         try {
-            (new WorkflowPipeline(new Transactioner))
+            (new Sequence(new Transactioner))
                 ->steps([
                     new PlaceOrderStep($this->placeOrder),
                     new AwardLoyaltyPointsStep($loyalty),
@@ -160,7 +160,7 @@ class WorkflowPipelineTest extends TestCase
         $payload = new CheckoutPayload('dave', 25);
         // no 'order' in the payload — BookShipmentStep declares requires: ['order']
 
-        (new WorkflowPipeline(new Transactioner))
+        (new Sequence(new Transactioner))
             ->steps([new BookShipmentStep(new BookShipment($this->shipping))])
             ->run($payload);
 
@@ -175,7 +175,7 @@ class WorkflowPipelineTest extends TestCase
         $payload = new CheckoutPayload('carol', 75);
         $payload->set('shippable', false);
 
-        $result = (new WorkflowPipeline(new Transactioner))
+        $result = (new Sequence(new Transactioner))
             ->steps([new PlaceOrderStep($this->placeOrder), new AbortUnlessShippable])
             ->steps([new BookShipmentStep(new BookShipment($this->shipping))])
             ->run($payload);

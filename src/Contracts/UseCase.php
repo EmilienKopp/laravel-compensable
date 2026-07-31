@@ -3,11 +3,11 @@
 namespace Splitstack\Conveyor\Contracts;
 
 use Splitstack\Conveyor\TransactionalBoundary;
-use Splitstack\Conveyor\RetryConfig;
+use Splitstack\Conveyor\Data\RetryConfig;
 
 /**
  * A UseCase is a TransactionalBoundary over its Actions, and is itself
- * Compensable so a parent scope (e.g. a WorkflowPipeline) can undo it —
+ * Compensable so a parent scope (e.g. a Sequence) can undo it —
  * cascading compensation down to every Action it ran.
  */
 abstract class UseCase extends TransactionalBoundary implements TransactionalUnit, TransactsWithEvents

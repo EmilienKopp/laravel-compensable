@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\DB;
 use Splitstack\Conveyor\Concerns\IsSteppable;
 use Splitstack\Conveyor\Contracts\Rewindable;
 use Splitstack\Conveyor\Contracts\Steppable;
-use Splitstack\Conveyor\RetryConfig;
+use Splitstack\Conveyor\Data\RetryConfig;
 use Splitstack\Conveyor\Tests\Fixtures\Payloads\CheckoutPayload;
 
 /**

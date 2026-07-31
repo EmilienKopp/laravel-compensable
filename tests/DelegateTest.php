@@ -5,7 +5,7 @@ namespace Splitstack\Conveyor\Tests;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
-use Splitstack\Conveyor\ConveyorStepJob;
+use Splitstack\Conveyor\Infrastructure\Queue\ConveyorStepJob;
 use Splitstack\Conveyor\Infrastructure\Transaction\Transactioner;
 use Splitstack\Conveyor\Tests\Fixtures\Actions\ChargePayment;
 use Splitstack\Conveyor\Tests\Fixtures\Actions\CreateOrder;
@@ -16,7 +16,7 @@ use Splitstack\Conveyor\Tests\Fixtures\Steps\FailingDelegatedStep;
 use Splitstack\Conveyor\Tests\Fixtures\Steps\ObservesCommittedOrderStep;
 use Splitstack\Conveyor\Tests\Fixtures\Steps\PlaceOrderStep;
 use Splitstack\Conveyor\Tests\Fixtures\UseCases\PlaceOrder;
-use Splitstack\Conveyor\WorkflowPipeline;
+use Splitstack\Conveyor\Sequence;
 
 class DelegateTest extends TestCase
 {
@@ -32,9 +32,9 @@ class DelegateTest extends TestCase
         config(['queue.default' => 'sync']);
     }
 
-    private function pipeline(): WorkflowPipeline
+    private function pipeline(): Sequence
     {
-        return new WorkflowPipeline(new Transactioner);
+        return new Sequence(new Transactioner);
     }
 
     public function test_delegate_dispatches_a_queued_job_instead_of_running_inline(): void

@@ -2,14 +2,14 @@
 
 namespace Splitstack\Conveyor\Tests\Fixtures\Payloads;
 
-use Splitstack\Conveyor\Contracts\WorkflowPayload;
+use Splitstack\Conveyor\Contracts\SequencePayload;
 
 /**
  * Known-at-entry properties are readonly constructor promoted;
  * mid-pipeline values ('order', 'chargeId', 'shipmentRef') travel
  * through the inherited set/get/has bag.
  */
-class CheckoutPayload extends WorkflowPayload
+class CheckoutPayload extends SequencePayload
 {
     public function __construct(
         public readonly string $customer,

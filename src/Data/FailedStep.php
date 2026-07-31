@@ -1,6 +1,6 @@
 <?php
 
-namespace Splitstack\Conveyor;
+namespace Splitstack\Conveyor\Data;
 
 use Splitstack\Conveyor\Contracts\TransactionalUnit;
 
@@ -11,7 +11,7 @@ use Splitstack\Conveyor\Contracts\TransactionalUnit;
  *     ->onHandleFailed(fn(FailedStep $f) => RetryStepJob::dispatch($f->action, $f->retryConfig))
  *
  * The job's own tries / backoff / timeout properties map directly to
- * RetryConfig::tries / retryAfterSeconds / timeoutSeconds.
+ * RetryConfig::tries / backoff / timeout.
  */
 final class FailedStep
 {

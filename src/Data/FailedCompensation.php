@@ -1,6 +1,6 @@
 <?php
 
-namespace Splitstack\Conveyor;
+namespace Splitstack\Conveyor\Data;
 
 use Splitstack\Conveyor\Contracts\Rewindable;
 

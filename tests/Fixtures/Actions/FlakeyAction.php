@@ -3,7 +3,7 @@
 namespace Splitstack\Conveyor\Tests\Fixtures\Actions;
 
 use Splitstack\Conveyor\Contracts\Action;
-use Splitstack\Conveyor\RetryConfig;
+use Splitstack\Conveyor\Data\RetryConfig;
 
 /**
  * Succeeds on the Nth attempt — simulates a transient external failure.
@@ -34,7 +34,7 @@ class FlakeyAction extends Action
 
     public function getRetryConfig(): ?RetryConfig
     {
-        return RetryConfig::make(tries: 3, retryAfterSeconds: 0);
+        return RetryConfig::make(tries: 3, backoff: 0);
     }
 
     public function isUnrecoverableError(\Throwable $e): bool

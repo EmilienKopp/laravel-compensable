@@ -9,7 +9,7 @@ use Splitstack\Conveyor\Tests\Fixtures\External\FakeShippingService;
 
 /**
  * Payload-ignorant action: takes the Order it needs directly; the
- * BookShipmentStep adapter extracts it from the workflow payload.
+ * BookShipmentStep adapter extracts it from the sequence payload.
  *
  * @extends Action<string>
  */

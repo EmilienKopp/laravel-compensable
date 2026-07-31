@@ -4,7 +4,7 @@ namespace Splitstack\Conveyor\Concerns;
 
 use Closure;
 use Illuminate\Support\Facades\Log;
-use Splitstack\Conveyor\FailedCompensation;
+use Splitstack\Conveyor\Data\FailedCompensation;
 use Splitstack\Conveyor\Contracts\Rewindable;
 
 trait ManagesRewindStack

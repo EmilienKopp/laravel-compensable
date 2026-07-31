@@ -1,12 +1,12 @@
 # splitstack/laravel-compensable
 
-A lightweight saga pattern for Laravel. Brings explicit compensation contracts to Actions, UseCases, and Workflows.
+A lightweight saga pattern for Laravel. Brings explicit compensation contracts to Actions, UseCases, and Sequences.
 
 ---
 
 ## The Problem
 
-When a workflow sequences DB writes alongside external API calls, no single transaction can provide consistency. DB transactions are local; Stripe charges, S3 puts, and webhook calls are not rollbackable. Standard try/catch leaves the compensation logic scattered and implicit.
+When a sequence sequences DB writes alongside external API calls, no single transaction can provide consistency. DB transactions are local; Stripe charges, S3 puts, and webhook calls are not rollbackable. Standard try/catch leaves the compensation logic scattered and implicit.
 
 This package makes it structural.
 
@@ -17,7 +17,7 @@ This package makes it structural.
 ```text
 Action        →  atomic unit. One thing. Declares its own undo.
 UseCase       →  orchestrates Actions. Owns a DB transaction. Is itself undoable.
-WorkflowPipeline  →  sequences UseCases/Actions via Steps. Owns the error boundary.
+Sequence  →  sequences UseCases/Actions via Steps. Owns the error boundary.
 Step          →  thin adapter around any existing class. Declares compensation for code that can't.
 ```
 
@@ -102,12 +102,12 @@ class PlaceOrder extends UseCase
 
 ---
 
-## WorkflowPayload
+## SequencePayload
 
 A typed DTO that travels through the pipeline. Constructor-promoted properties for entry-time data; the inherited `set/get/has` bag for values produced mid-pipeline.
 
 ```php
-class CheckoutPayload extends WorkflowPayload
+class CheckoutPayload extends SequencePayload
 {
     public function __construct(
         public readonly string $customer,
@@ -174,12 +174,12 @@ public function requires(): array
 
 ---
 
-## Workflows
+## Sequences
 
-Extend `WorkflowPipeline` and call `steps()` / `skippable()` / `run()`. Call `transacts()` to wrap the whole sequence in one DB transaction (inner UseCase transactions become savepoints). Without it, each step commits on its own and only external state is compensated on failure.
+Extend `Sequence` and call `steps()` / `skippable()` / `run()`. Call `transacts()` to wrap the whole sequence in one DB transaction (inner UseCase transactions become savepoints). Without it, each step commits on its own and only external state is compensated on failure.
 
 ```php
-final class CheckoutWorkflow extends WorkflowPipeline
+final class CheckoutSequence extends Sequence
 {
     public function __construct(
         Transactioner $transactioner,
@@ -223,8 +223,8 @@ return $this
 This is an unopinionated option, not a policy. What the package does and does not do:
 
 - **Dispatch, not run.** A delegated step is dispatched via `ConveyorStepJob`, which carries the step's class name and the payload. On the worker the step is rebuilt from the container (collaborators re-injected, never serialized). It is *not* tracked on the parent's rewind stack.
-- **Self-compensation.** When the job exhausts its retries, its `failed()` hook calls the step's own `rewind()`. Delegated steps compensate themselves; the parent workflow's cascade does not reach them.
-- **Retry policy.** If the step declares `getRetryConfig()`, it maps onto the job: `tries` → `$tries`, `retryAfterSeconds` → `$backoff`, `timeoutSeconds` → `$timeout`. No config means a single attempt.
+- **Self-compensation.** When the job exhausts its retries, its `failed()` hook calls the step's own `rewind()`. Delegated steps compensate themselves; the parent sequence's cascade does not reach them.
+- **Retry policy.** If the step declares `getRetryConfig()`, it maps onto the job: `tries` → `$tries`, `backoff` → `$backoff`, `timeout` → `$timeout`. No config means a single attempt.
 - **`afterCommit` (default on).** By default dispatch waits for the surrounding transaction to commit, so inline / `transacts()` writes land before the worker reads them. Pass `delegate($step, afterCommit: false)` to dispatch immediately — your call.
 - **Ordering.** Multiple `delegate()` calls form a single chain in declaration order. If a terminal step depends on delegated work finishing, delegate it too as the chain tail (or move it into a chain callback).
 - **Serialization is yours.** There is no `SerializablePayload` contract and no runtime guard. If the payload doesn't serialize, Laravel throws — that's the signal. Idempotency and payload independence are the developer's responsibility.
@@ -241,13 +241,13 @@ Domain events are the alternative when you want post-commit side effects without
 
 ## Graceful abort
 
-Throw `WorkflowAbortedException` from any step to stop cleanly. Completed work commits, events fire, no compensation runs.
+Throw `SequenceAbortedException` from any step to stop cleanly. Completed work commits, events fire, no compensation runs.
 
 ```php
 public function handle(CheckoutPayload $payload): void
 {
     if (!$payload->get('needsSync')) {
-        throw new WorkflowAbortedException();
+        throw new SequenceAbortedException();
     }
 }
 ```
@@ -259,7 +259,7 @@ public function handle(CheckoutPayload $payload): void
 If `undo()` itself throws, the cascade continues (no step is abandoned) and the failure is reported:
 
 ```php
-$workflow->onCompensationFailed(function (FailedCompensation $f): void {
+$sequence->onCompensationFailed(function (FailedCompensation $f): void {
     // $f->action, $f->result, $f->exception, $f->cause, $f->failedAt
     SlackAlert::send("Compensation failed: {$f->action::class}");
 });
@@ -281,7 +281,7 @@ class SyncExternalListing extends Action
 {
     public function getRetryConfig(): ?RetryConfig
     {
-        return RetryConfig::make(tries: 3, retryAfterSeconds: 2, timeoutSeconds: 30);
+        return RetryConfig::make(tries: 3, backoff: 2, timeout: 30);
     }
 
     public function isUnrecoverableError(\Throwable $e): bool
@@ -300,8 +300,8 @@ When retries are exhausted, the `onStepFailed` hook fires before compensation be
 $scope->onStepFailed(function (FailedStep $f): void {
     // RetryConfig maps directly to job properties:
     // $tries = $f->retryConfig->tries
-    // $retryAfter = $f->retryConfig->retryAfterSeconds
-    // $timeout = $f->retryConfig->timeoutSeconds
+    // $backoff = $f->retryConfig->backoff
+    // $timeout = $f->retryConfig->timeout
     RetryStepJob::dispatch($f->action, $f->retryConfig);
 });
 ```
@@ -313,7 +313,7 @@ $scope->onStepFailed(function (FailedStep $f): void {
 | Context                           | DB::transaction() behavior                     |
 | --------------------------------- | ---------------------------------------------- |
 | Action inside a UseCase           | savepoint (released on UseCase "commit")       |
-| UseCase inside a WorkflowPipeline | savepoint (rolled back if pipeline rolls back) |
+| UseCase inside a Sequence | savepoint (rolled back if pipeline rolls back) |
 | UseCase called standalone         | outermost transaction, commits immediately     |
 
 `DB::afterCommit` defers to the outermost transaction in all cases. Events recorded inside a UseCase nested in a pipeline fire only when the pipeline itself commits.
@@ -324,11 +324,11 @@ $scope->onStepFailed(function (FailedStep $f): void {
 
 ### Compensation hierarchy
 
-Both `WorkflowPipeline` and `TransactionalBoundary` use the `ManagesUndoStack` trait, so each has its own undo stack. On failure, each layer calls `compensate()` on what it directly tracked: the pipeline compensates its Steps, each UseCase compensates its own Actions (and nested UseCases cascade further).
+Both `Sequence` and `TransactionalBoundary` use the `ManagesUndoStack` trait, so each has its own undo stack. On failure, each layer calls `compensate()` on what it directly tracked: the pipeline compensates its Steps, each UseCase compensates its own Actions (and nested UseCases cascade further).
 
 ```mermaid
 graph TD
-    WP["WorkflowPipeline\n(ManagesUndoStack)"]
+    WP["Sequence\n(ManagesUndoStack)"]
 
     subgraph PipelineScope ["↩ Pipeline compensates these on failure (in reverse)"]
         S1["Step 1  (Undoable)"]
@@ -361,18 +361,18 @@ graph TD
 When Action C (inside Step 2 / UseCase 2) fails, the unwinding is:
 
 1. `UseCase 2` catches → `DB::rollBack()` to savepoint → `compensate()` → `Action C.undo()` (external side-effects only)
-2. Exception bubbles to `WorkflowPipeline` → `DB::rollBack()` real transaction (wipes all DB writes) → `compensate()` → `Step 1.undo()` (Step 2 never completed, so it was never tracked)
+2. Exception bubbles to `Sequence` → `DB::rollBack()` real transaction (wipes all DB writes) → `compensate()` → `Step 1.undo()` (Step 2 never completed, so it was never tracked)
 
 ---
 
 ### Execution sequence
 
-`WorkflowPipeline` and `TransactionalBoundary` both call `DB::beginTransaction()` via `Transactioner`. Laravel handles nesting with savepoints: the first call opens a real transaction; nested calls create a savepoint. The pipeline holds the outer transaction; each UseCase inside runs on a savepoint. On failure, the UseCase rolls back to its savepoint and calls `compensate()` on its actions, then the exception bubbles up and the pipeline rolls back the real transaction and calls `compensate()` on completed Steps.
+`Sequence` and `TransactionalBoundary` both call `DB::beginTransaction()` via `Transactioner`. Laravel handles nesting with savepoints: the first call opens a real transaction; nested calls create a savepoint. The pipeline holds the outer transaction; each UseCase inside runs on a savepoint. On failure, the UseCase rolls back to its savepoint and calls `compensate()` on its actions, then the exception bubbles up and the pipeline rolls back the real transaction and calls `compensate()` on completed Steps.
 
 ```mermaid
 sequenceDiagram
     participant C as Caller
-    participant WP as WorkflowPipeline
+    participant WP as Sequence
     participant S as Step adapter
     participant UC as UseCase (TransactionalBoundary)
     participant A1 as Action or UseCase 1
@@ -425,6 +425,6 @@ sequenceDiagram
 
 ## Scope of this package
 
-This package provides **best-effort, in-process compensation with explicit contracts**. It is not durable execution, if the process crashes between an external mutation and its `undo()`, no compensation runs. For guaranteed compensation across process restarts, consider Temporal.io or a durable workflow engine.
+This package provides **best-effort, in-process compensation with explicit contracts**. It is not durable execution, if the process crashes between an external mutation and its `undo()`, no compensation runs. For guaranteed compensation across process restarts, consider Temporal.io or a durable sequence engine.
 
 The `onStepFailed` / `onCompensationFailed` hooks are the extension points for plugging in queue-backed retry.

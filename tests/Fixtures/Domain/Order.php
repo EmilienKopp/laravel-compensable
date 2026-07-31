@@ -2,7 +2,7 @@
 
 namespace Splitstack\Conveyor\Tests\Fixtures\Domain;
 
-use Splitstack\Conveyor\Domain\Contracts\HasDomainEvents;
+use Splitstack\Conveyor\Contracts\HasDomainEvents;
 
 class Order implements HasDomainEvents
 {

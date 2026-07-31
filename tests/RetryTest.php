@@ -3,7 +3,7 @@
 namespace Splitstack\Conveyor\Tests;
 
 use Splitstack\Conveyor\TransactionalBoundary;
-use Splitstack\Conveyor\FailedStep;
+use Splitstack\Conveyor\Data\FailedStep;
 use Splitstack\Conveyor\Infrastructure\Transaction\Transactioner;
 use Splitstack\Conveyor\Tests\Fixtures\Actions\FlakeyAction;
 use Splitstack\Conveyor\Tests\Fixtures\Actions\SpyAction;
@@ -44,7 +44,7 @@ class RetryTest extends TestCase
         $this->assertNotNull($failure);
         $this->assertInstanceOf(FlakeyAction::class, $failure->action);
         $this->assertSame(3, $failure->attempts);
-        $this->assertSame(0, $failure->retryConfig?->retryAfterSeconds);
+        $this->assertSame(0, $failure->retryConfig?->backoff);
     }
 
     public function test_exhausted_retries_still_trigger_compensation_for_prior_steps(): void
@@ -92,9 +92,9 @@ class RetryTest extends TestCase
             // consumer would do: RetryStepJob::dispatch($f->action, $f->retryConfig)
             $dispatched = [
                 'action'             => $f->action::class,
-                'tries'              => $f->retryConfig?->tries,
-                'retryAfterSeconds'  => $f->retryConfig?->retryAfterSeconds,
-                'timeoutSeconds'     => $f->retryConfig?->timeoutSeconds,
+                'tries'   => $f->retryConfig?->tries,
+                'backoff' => $f->retryConfig?->backoff,
+                'timeout' => $f->retryConfig?->timeout,
             ];
         });
 
@@ -106,8 +106,8 @@ class RetryTest extends TestCase
 
         $this->assertSame(FlakeyAction::class, $dispatched['action']);
         $this->assertSame(3, $dispatched['tries']);
-        $this->assertSame(0, $dispatched['retryAfterSeconds']);
-        $this->assertSame(14, $dispatched['timeoutSeconds']);
+        $this->assertSame(0, $dispatched['backoff']);
+        $this->assertSame(14, $dispatched['timeout']);
     }
 
     public function test_action_without_retry_config_fails_immediately(): void

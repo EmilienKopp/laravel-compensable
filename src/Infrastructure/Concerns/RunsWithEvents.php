@@ -4,8 +4,8 @@ namespace Splitstack\Conveyor\Infrastructure\Concerns;
 
 use Closure;
 use Illuminate\Support\Facades\Event;
-use Splitstack\Conveyor\Domain\Contracts\HasDomainEvents;
-use Splitstack\Conveyor\Domain\Contracts\IsDomainEvent;
+use Splitstack\Conveyor\Contracts\HasDomainEvents;
+use Splitstack\Conveyor\Contracts\IsDomainEvent;
 
 trait RunsWithEvents
 {

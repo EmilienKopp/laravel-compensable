@@ -11,6 +11,6 @@ class ConveyorServiceProvider extends ServiceProvider
     {
         $this->app->bind(Transactioner::class);
 
-        $this->app->bind(WorkflowPipeline::class);
+        $this->app->bind(Sequence::class);
     }
 }

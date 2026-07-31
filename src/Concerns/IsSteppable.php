@@ -3,13 +3,13 @@
 namespace Splitstack\Conveyor\Concerns;
 
 use Closure;
-use Splitstack\Conveyor\Contracts\WorkflowPayload;
+use Splitstack\Conveyor\Contracts\SequencePayload;
 
 /**
  * Wires __invoke() to handle() or execute() so any class can be used as
- * a workflow step. The passable flows through unchanged — steps produce
+ * a sequence step. The passable flows through unchanged — steps produce
  * side effects only. If the step defines requires(): array and the
- * passable is a WorkflowPayload, the step self-skips when its required
+ * passable is a SequencePayload, the step self-skips when its required
  * keys are not present in the payload.
  */
 trait IsSteppable
@@ -29,7 +29,7 @@ trait IsSteppable
 
     public function skips(mixed $passable): bool
     {
-        if (! method_exists($this, 'requires') || ! $passable instanceof WorkflowPayload) {
+        if (! method_exists($this, 'requires') || ! $passable instanceof SequencePayload) {
             return false;
         }
 

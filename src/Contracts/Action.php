@@ -2,7 +2,7 @@
 
 namespace Splitstack\Conveyor\Contracts;
 
-use Splitstack\Conveyor\RetryConfig;
+use Splitstack\Conveyor\Data\RetryConfig;
 
 /**
  * Atomic unit of application work. One thing, no transaction of its own,
