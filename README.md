@@ -1,4 +1,4 @@
-# splitstack/laravel-compensable
+# splitstack/laravel-conveyor
 
 A lightweight saga pattern for Laravel. Brings explicit compensation contracts to Actions, UseCases, and Sequences.
 
@@ -28,7 +28,7 @@ Step          →  thin adapter around any existing class. Declares compensation
 ## Installation
 
 ```bash
-composer require splitstack/laravel-compensable
+composer require splitstack/laravel-conveyor
 ```
 
 The service provider is auto-discovered.
