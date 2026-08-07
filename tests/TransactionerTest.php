@@ -57,7 +57,7 @@ test('execute with events dispatches after commit', function () {
     };
 
     $domainObject = makeDomainObject();
-    $domainObject->recordEvent('order.placed', []);
+    $domainObject->recordEvent(new GenericDomainEvent('order.placed', []));
 
     transactioner()->executeWithEvents(
         fn() => $domainObject,
@@ -74,7 +74,7 @@ test('execute with events does not dispatch on failure', function () {
     };
 
     $domainObject = makeDomainObject();
-    $domainObject->recordEvent('order.placed', []);
+    $domainObject->recordEvent(new GenericDomainEvent('order.placed', []));
 
     try {
         transactioner()->executeWithEvents(
@@ -96,7 +96,7 @@ test('execute with events does not dispatch on failure', function () {
 test('custom dispatcher is used instead of laravel event', function () {
     $custom = [];
     $domainObject = makeDomainObject();
-    $domainObject->recordEvent('something.happened', ['key' => 'value']);
+    $domainObject->recordEvent(new GenericDomainEvent('something.happened', ['key' => 'value']));
 
     transactioner()->executeWithEvents(
         fn() => $domainObject,

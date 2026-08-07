@@ -2,7 +2,7 @@
 
 namespace Splitstack\Conveyor\Contracts;
 
-interface Rewindable
+interface Rewindable extends Compensable
 {
     /**
      * Rewind EXTERNAL mutations only (API calls, S3 writes, ...).

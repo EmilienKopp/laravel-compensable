@@ -7,7 +7,7 @@ interface HasDomainEvents
     /**
      * Record an event
      */
-    public function recordEvent(string $event, mixed $payload): void;
+    public function recordEvent(IsDomainEvent $event): void;
 
     /**
      * Get the recorded events

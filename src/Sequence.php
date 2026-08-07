@@ -8,6 +8,8 @@ use Closure;
 use Illuminate\Pipeline\Pipeline;
 use Illuminate\Support\Facades\Bus;
 use Splitstack\Conveyor\Concerns\ManagesRewindStack;
+use Splitstack\Conveyor\Contracts\CompensatesData;
+use Splitstack\Conveyor\Contracts\SequencePayload;
 use Splitstack\Conveyor\Contracts\Skippable;
 use Splitstack\Conveyor\Contracts\Rewindable;
 use Splitstack\Conveyor\Contracts\Steppable;
@@ -83,8 +85,16 @@ class Sequence
 
     public function run(mixed $passable): mixed
     {
+        // Capture the boundary before convey() resets it, so the catch reads the
+        // real mode (not the reset false) when deciding on data compensation.
+        $transacts = $this->runInTransaction;
+
+        if ($passable instanceof SequencePayload) {
+            $passable->markTransacting($transacts);
+        }
+
         try {
-            if ($this->runInTransaction) {
+            if ($transacts) {
                 // compensate() sits outside execute() on purpose: the transaction
                 // rolls back first, then rewind() runs, so a compensating write (e.g.
                 // a Failed status) lands after rollback and survives.
@@ -93,7 +103,9 @@ class Sequence
 
             return $this->convey($passable);
         } catch (\Throwable $e) {
-            $this->compensate($e);
+            // No transaction means committed writes stand — compensateData() must
+            // reverse them by hand. Inside a transaction the rollback already did.
+            $this->compensate(compensateData: ! $transacts, cause: $e);
             throw $e;
         }
     }
@@ -173,7 +185,7 @@ class Sequence
 
             $pipe($payload, null);
 
-            if ($pipe instanceof Rewindable) {
+            if ($pipe instanceof Rewindable || $pipe instanceof CompensatesData) {
                 $this->track($pipe, $payload);
             }
 

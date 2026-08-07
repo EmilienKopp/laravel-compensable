@@ -36,7 +36,9 @@ class TransactionalBoundary
         try {
             return $this->transactioner->execute(fn() => $callback($this));
         } catch (\Throwable $e) {
-            $this->compensate($e);
+            // Inside this boundary's own transaction: the rollback reverted DB
+            // writes, so only external effects need compensating.
+            $this->compensate(cause: $e);
             throw $e;
         }
     }
@@ -50,7 +52,7 @@ class TransactionalBoundary
         try {
             return $this->transactioner->executeWithEvents(fn() => $callback($this), $dispatcher);
         } catch (\Throwable $e) {
-            $this->compensate($e);
+            $this->compensate(cause: $e);
             throw $e;
         }
     }

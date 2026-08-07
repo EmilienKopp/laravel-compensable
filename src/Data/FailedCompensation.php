@@ -2,17 +2,19 @@
 
 namespace Splitstack\Conveyor\Data;
 
+use Splitstack\Conveyor\Contracts\CompensatesData;
 use Splitstack\Conveyor\Contracts\Rewindable;
 
 /**
- * Full context of a failed rewind(), handed to the onCompensationFailed hook.
+ * Full context of a failed compensation (rewind() or compensateData()),
+ * handed to the onCompensationFailed hook.
  */
 final class FailedCompensation
 {
     public readonly \DateTimeImmutable $failedAt;
 
     public function __construct(
-        public readonly Rewindable $action,
+        public readonly Rewindable|CompensatesData $action,
         public readonly mixed $result,
         public readonly \Throwable $exception,
         public readonly ?\Throwable $cause = null,
@@ -26,6 +28,12 @@ final class FailedCompensation
      */
     public function retry(): void
     {
-        $this->action->rewind($this->result);
+        if ($this->action instanceof Rewindable) {
+            $this->action->rewind($this->result);
+        }
+
+        if ($this->action instanceof CompensatesData) {
+            $this->action->compensateData();
+        }
     }
 }

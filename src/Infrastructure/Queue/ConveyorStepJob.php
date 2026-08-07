@@ -7,6 +7,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Splitstack\Conveyor\Contracts\CompensatesData;
 use Splitstack\Conveyor\Contracts\Rewindable;
 use Splitstack\Conveyor\Contracts\Steppable;
 use Splitstack\Conveyor\Data\RetryConfig;
@@ -68,6 +69,12 @@ class ConveyorStepJob implements ShouldQueue
 
         if ($step instanceof Rewindable) {
             $step->rewind($this->payload);
+        }
+
+        // A delegated step runs on the queue, outside any Sequence transaction,
+        // so its committed writes need hand-rolled compensation too.
+        if ($step instanceof CompensatesData) {
+            $step->compensateData();
         }
     }
 

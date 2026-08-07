@@ -18,6 +18,9 @@ use Splitstack\Conveyor\Tests\Fixtures\Steps\BookShipmentStep;
 use Splitstack\Conveyor\Tests\Fixtures\Steps\PlaceOrderStep;
 use Splitstack\Conveyor\Tests\Fixtures\UseCases\PlaceOrder;
 use Splitstack\Conveyor\Tests\Fixtures\Sequences\CheckoutSequence;
+use Splitstack\Conveyor\Concerns\IsSteppable;
+use Splitstack\Conveyor\Contracts\CompensatesData;
+use Splitstack\Conveyor\Contracts\Steppable;
 use Splitstack\Conveyor\Sequence;
 
 
@@ -169,4 +172,77 @@ test('abort keeps completed work and skips compensation', function () {
     // no compensation: the charge stands, and the commit fired events
     expect($this->gateway->refunds)->toBe([]);
     Event::assertDispatchedTimes(GenericDomainEvent::class, 1);
+});
+
+test('the payload exposes the declared transaction mode to steps', function () {
+    $payload = new CheckoutPayload('grace', 30);
+    $seen = null;
+
+    (new Sequence(new Transactioner))
+        ->transacts()
+        ->steps([function (CheckoutPayload $p) use (&$seen): void {
+            $seen = $p->transacting();
+        }])
+        ->run($payload);
+
+    expect($seen)->toBeTrue();
+    expect($payload->transacting())->toBeTrue();
+});
+
+test('dont transact marks the payload as non transacting', function () {
+    $payload = new CheckoutPayload('heidi', 30);
+
+    (new Sequence(new Transactioner))
+        ->dontTransact()
+        ->steps([fn ($p) => null])
+        ->run($payload);
+
+    expect($payload->transacting())->toBeFalse();
+});
+
+test('compensateData reverses a committed step only when not transacting', function () {
+    $makeStep = fn (ArrayObject $log) => new class ($log) implements CompensatesData, Steppable {
+        use IsSteppable;
+
+        public function __construct(private readonly ArrayObject $log) {}
+
+        public function handle(CheckoutPayload $payload): void
+        {
+            DB::table('orders')->insert([
+                'customer' => $payload->customer,
+                'amount' => $payload->amount,
+                'status' => 'pending',
+            ]);
+        }
+
+        public function compensateData(): void
+        {
+            $this->log[] = 'compensateData';
+            DB::table('orders')->delete();
+        }
+    };
+
+    // dontTransact: the insert commits, so a later failure must reverse it via compensateData().
+    $dontTransactLog = new ArrayObject;
+    try {
+        (new Sequence(new Transactioner))
+            ->dontTransact()
+            ->steps([$makeStep($dontTransactLog), fn ($p) => throw new RuntimeException('boom')])
+            ->run(new CheckoutPayload('ivan', 10));
+    } catch (RuntimeException) {
+    }
+    expect((array) $dontTransactLog)->toBe(['compensateData']);
+    expect(DB::table('orders')->count())->toBe(0);
+
+    // transacts: the outer transaction rolls the insert back, so compensateData() must NOT run.
+    $transactsLog = new ArrayObject;
+    try {
+        (new Sequence(new Transactioner))
+            ->transacts()
+            ->steps([$makeStep($transactsLog), fn ($p) => throw new RuntimeException('boom')])
+            ->run(new CheckoutPayload('jane', 10));
+    } catch (RuntimeException) {
+    }
+    expect((array) $transactsLog)->toBe([]);
+    expect(DB::table('orders')->count())->toBe(0);
 });

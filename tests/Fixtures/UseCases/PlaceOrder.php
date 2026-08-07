@@ -6,6 +6,7 @@ use Splitstack\Conveyor\Contracts\UseCase;
 use Splitstack\Conveyor\Infrastructure\Transaction\Transactioner;
 use Splitstack\Conveyor\Tests\Fixtures\Actions\ChargePayment;
 use Splitstack\Conveyor\Tests\Fixtures\Actions\CreateOrder;
+use Splitstack\Conveyor\Tests\Fixtures\Domain\GenericDomainEvent;
 use Splitstack\Conveyor\Tests\Fixtures\Domain\Order;
 
 /**
@@ -33,7 +34,7 @@ class PlaceOrder extends UseCase
             $order = $this->step($this->createOrder, $customer, $amount);
             $chargeId = $this->step($this->chargePayment, $order);
 
-            $order->recordEvent('order.placed', ['orderId' => $order->id, 'chargeId' => $chargeId]);
+            $order->recordEvent(new GenericDomainEvent('order.placed', ['orderId' => $order->id, 'chargeId' => $chargeId]));
 
             return $order;
         });

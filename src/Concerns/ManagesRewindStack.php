@@ -5,11 +5,12 @@ namespace Splitstack\Conveyor\Concerns;
 use Closure;
 use Illuminate\Support\Facades\Log;
 use Splitstack\Conveyor\Data\FailedCompensation;
+use Splitstack\Conveyor\Contracts\CompensatesData;
 use Splitstack\Conveyor\Contracts\Rewindable;
 
 trait ManagesRewindStack
 {
-    /** @var array{0: Rewindable, 1: mixed}[] */
+    /** @var array{0: Rewindable|CompensatesData, 1: mixed}[] */
     private array $rewindStack = [];
 
     private ?Closure $onCompensationFailed = null;
@@ -22,16 +23,29 @@ trait ManagesRewindStack
         return $this;
     }
 
-    protected function track(Rewindable $action, mixed $result = null): void
+    protected function track(Rewindable|CompensatesData $action, mixed $result = null): void
     {
         $this->rewindStack[] = [$action, $result];
     }
 
-    public function compensate(?\Throwable $cause = null): void
+    /**
+     * Run compensation in reverse order.
+     *
+     * rewind() (external effects) always runs. compensateData() (committed DB
+     * writes) runs only when $compensateData is true — i.e. the owning scope
+     * did NOT transact, so no rollback reverted those writes.
+     */
+    public function compensate(bool $compensateData = false, ?\Throwable $cause = null): void
     {
         foreach (array_reverse($this->rewindStack) as [$action, $result]) {
             try {
-                $action->rewind($result);
+                if ($action instanceof Rewindable) {
+                    $action->rewind($result);
+                }
+
+                if ($compensateData && $action instanceof CompensatesData) {
+                    $action->compensateData();
+                }
             } catch (\Throwable $e) {
                 $this->reportCompensationFailure(new FailedCompensation($action, $result, $e, $cause));
             }
